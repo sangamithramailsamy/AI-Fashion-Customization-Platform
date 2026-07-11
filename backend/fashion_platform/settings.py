@@ -45,7 +45,11 @@ INSTALLED_APPS = [
     "customers",
     'boutiques',
     'employees',
+    'orders',
+    'payments',
+    "measurements",
 ]
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
