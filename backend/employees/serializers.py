@@ -22,7 +22,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
         read_only_fields = (
             "id",
-            "owner",
+            "owner",          # <-- Add this comma
             "created_at",
             "updated_at",
-        )
+        )   

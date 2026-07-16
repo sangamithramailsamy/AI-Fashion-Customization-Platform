@@ -9,6 +9,14 @@ class Employee(models.Model):
         related_name="employees"
     )
 
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="employee_profile",
+        null=True,
+        blank=True,
+    )
+
     employee_name = models.CharField(max_length=100)
 
     phone = models.CharField(

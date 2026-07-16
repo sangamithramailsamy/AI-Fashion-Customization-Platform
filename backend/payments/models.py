@@ -139,15 +139,10 @@ class Payment(models.Model):
             or Decimal("0.00")
         )
 
-        self.order.advance_paid = total_paid
-        self.order.balance_amount = (
-            self.order.total_amount - total_paid
+        Order.objects.filter(pk=self.order.pk).update(
+            advance_paid=total_paid,
+            balance_amount=self.order.total_amount - total_paid,
         )
-
-        self.order.save(
-            update_fields=["advance_paid", "balance_amount"]
-        )
-
 
     def save(self, *args, **kwargs):
         # Generate payment number for new payments
@@ -177,12 +172,8 @@ class Payment(models.Model):
             or Decimal("0.00")
         )
 
-        # Update order
-        order.advance_paid = total_paid
-        order.balance_amount = (
-            order.total_amount - total_paid
-        )
-
-        order.save(
-            update_fields=["advance_paid", "balance_amount"]
+        # Update order directly
+        Order.objects.filter(pk=order.pk).update(
+            advance_paid=total_paid,
+            balance_amount=order.total_amount - total_paid,
         )
