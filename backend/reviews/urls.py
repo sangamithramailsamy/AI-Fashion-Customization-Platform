@@ -3,7 +3,16 @@ from .views import ReviewViewSet, ReviewMediaViewSet
 
 router = DefaultRouter()
 
-router.register("reviews", ReviewViewSet)
-router.register("review-media", ReviewMediaViewSet)
+router.register(
+    "reviews",
+    ReviewViewSet,
+    basename="review",
+)
+
+router.register(
+    "review-media",
+    ReviewMediaViewSet,
+    basename="review-media",
+)
 
 urlpatterns = router.urls
