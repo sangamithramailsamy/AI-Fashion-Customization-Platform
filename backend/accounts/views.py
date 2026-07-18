@@ -29,7 +29,22 @@ class RegisterView(APIView):
                 },
                 status=status.HTTP_201_CREATED,
             )
-        
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        ) 
+    
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+
+    
 class LoginView(APIView):
     permission_classes = [AllowAny]
 

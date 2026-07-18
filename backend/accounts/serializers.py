@@ -1,4 +1,6 @@
+from django.contrib.auth import authenticate
 from rest_framework import serializers
+
 from users.models import User
 
 
@@ -17,11 +19,42 @@ class RegisterSerializer(serializers.ModelSerializer):
             "role",
         ]
 
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(
+                "Username already exists."
+            )
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                "Email already exists."
+            )
+        return value
+
+    def validate_phone_number(self, value):
+        if User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError(
+                "Phone number already exists."
+            )
+        return value
+
     def validate(self, attrs):
         if attrs["password"] != attrs["confirm_password"]:
             raise serializers.ValidationError(
-                {"confirm_password": "Passwords do not match."}
+                {
+                    "confirm_password": "Passwords do not match."
+                }
             )
+
+        if attrs.get("role") == "ADMIN":
+            raise serializers.ValidationError(
+                {
+                    "role": "You cannot register as an Admin."
+                }
+            )
+
         return attrs
 
     def create(self, validated_data):
@@ -36,9 +69,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         return user
-    
-
-from django.contrib.auth import authenticate
 
 
 class LoginSerializer(serializers.Serializer):
