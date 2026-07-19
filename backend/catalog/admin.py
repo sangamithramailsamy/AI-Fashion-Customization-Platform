@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import (
     Section,
     CollectionCategory,
@@ -16,9 +17,23 @@ class SectionAdmin(admin.ModelAdmin):
         "is_active",
     )
 
+    search_fields = (
+        "name",
+    )
+
+    list_filter = (
+        "is_active",
+    )
+
     prepopulated_fields = {
         "slug": ("name",)
     }
+
+    ordering = (
+        "display_order",
+    )
+
+    list_per_page = 20
 
 
 @admin.register(CollectionCategory)
@@ -43,6 +58,12 @@ class CollectionCategoryAdmin(admin.ModelAdmin):
         "slug": ("name",)
     }
 
+    ordering = (
+        "display_order",
+    )
+
+    list_per_page = 20
+
 
 @admin.register(Design)
 class DesignAdmin(admin.ModelAdmin):
@@ -59,6 +80,7 @@ class DesignAdmin(admin.ModelAdmin):
         "category",
         "is_active",
         "is_featured",
+        "is_new_arrival",
     )
 
     search_fields = (
@@ -68,6 +90,17 @@ class DesignAdmin(admin.ModelAdmin):
     prepopulated_fields = {
         "slug": ("name",)
     }
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    ordering = (
+        "-created_at",
+    )
+
+    list_per_page = 20
 
 
 @admin.register(DesignImage)
@@ -81,6 +114,12 @@ class DesignImageAdmin(admin.ModelAdmin):
     list_filter = (
         "is_primary",
     )
+
+    ordering = (
+        "display_order",
+    )
+
+    list_per_page = 20
 
 
 @admin.register(DesignVariant)
@@ -103,3 +142,9 @@ class DesignVariantAdmin(admin.ModelAdmin):
         "design__name",
         "sku",
     )
+
+    ordering = (
+        "design",
+    )
+
+    list_per_page = 20

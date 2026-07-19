@@ -31,6 +31,12 @@ class ReviewAdmin(admin.ModelAdmin):
         "order",
     )
 
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+
 
 @admin.register(ReviewMedia)
 class ReviewMediaAdmin(admin.ModelAdmin):
@@ -48,3 +54,11 @@ class ReviewMediaAdmin(admin.ModelAdmin):
     raw_id_fields = (
         "review",
     )
+
+    readonly_fields = (
+        "uploaded_at",
+    )
+
+
+
+    list_per_page = 20

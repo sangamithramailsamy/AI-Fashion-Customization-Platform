@@ -30,3 +30,12 @@ class CouponAdmin(admin.ModelAdmin):
     ordering = (
         "-created_at",
     )
+
+    readonly_fields = (
+        "used_count",
+        "created_at",
+        "updated_at",
+    )
+
+
+    list_per_page = 20

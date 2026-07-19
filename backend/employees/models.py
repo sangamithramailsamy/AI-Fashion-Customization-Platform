@@ -21,11 +21,13 @@ class Employee(models.Model):
 
     phone = models.CharField(
         max_length=15,
-        blank=True
+        blank=True,
+        db_index=True,
     )
 
     email = models.EmailField(
-        blank=True
+        blank=True,
+        db_index=True,
     )
 
     role = models.CharField(
@@ -51,6 +53,9 @@ class Employee(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.employee_name

@@ -18,25 +18,61 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
         # Admin
         if user.is_superuser or user.role == UserRole.ADMIN:
-            return Payment.objects.select_related("order")
+            return (
+                Payment.objects
+                .select_related(
+                    "order",
+                    "order__customer",
+                    "order__employee",
+                    "order__boutique",
+                    "created_by",
+                )
+            )
 
         # Boutique Owner
         elif user.role == UserRole.OWNER:
-            return Payment.objects.filter(
-                order__owner=user
-            ).select_related("order")
+            return (
+                Payment.objects.filter(
+                    order__owner=user
+                )
+                .select_related(
+                    "order",
+                    "order__customer",
+                    "order__employee",
+                    "order__boutique",
+                    "created_by",
+                )
+            )
 
         # Tailor
         elif user.role == UserRole.TAILOR:
-            return Payment.objects.filter(
-                order__employee__user=user
-            ).select_related("order")
+            return (
+                Payment.objects.filter(
+                    order__employee__user=user
+                )
+                .select_related(
+                    "order",
+                    "order__customer",
+                    "order__employee",
+                    "order__boutique",
+                    "created_by",
+                )
+            )
 
         # Customer
         elif user.role == UserRole.CUSTOMER:
-            return Payment.objects.filter(
-                order__customer__user=user
-            ).select_related("order")
+            return (
+                Payment.objects.filter(
+                    order__customer__user=user
+                )
+                .select_related(
+                    "order",
+                    "order__customer",
+                    "order__employee",
+                    "order__boutique",
+                    "created_by",
+                )
+            )
 
         return Payment.objects.none()
 

@@ -36,3 +36,5 @@ class PaymentAdmin(admin.ModelAdmin):
         "-payment_date",
         "-created_at",
     )
+ 
+    list_per_page = 20 

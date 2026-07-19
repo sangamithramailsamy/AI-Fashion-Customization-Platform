@@ -44,7 +44,7 @@ class Boutique(models.Model):
         blank=True
     )
 
-    city = models.CharField(max_length=100)
+    city = models.CharField(max_length=100,db_index=True)
 
     state = models.CharField(max_length=100)
 
@@ -71,7 +71,8 @@ class Boutique(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="ACTIVE"
+        default="ACTIVE",
+        db_index=True
     )
 
     created_at = models.DateTimeField(
@@ -81,6 +82,9 @@ class Boutique(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.boutique_name

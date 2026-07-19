@@ -20,13 +20,8 @@ class EmployeeListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
 
-        email = serializer.validated_data["email"]
-        phone = serializer.validated_data["phone"]
-
-        print("=" * 50)
-        print("EMAIL :", email)
-        print("PHONE :", phone)
-        print("=" * 50)
+        email = serializer.validated_data.get("email")
+        phone = serializer.validated_data.get("phone")
 
         # Check duplicate email
         if User.objects.filter(email=email).exists():

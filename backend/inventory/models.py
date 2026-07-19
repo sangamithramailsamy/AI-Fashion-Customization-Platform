@@ -1,6 +1,7 @@
 from django.db import models
 
 from boutiques.models import Boutique
+from django.core.exceptions import ValidationError
 
 
 class Inventory(models.Model):
@@ -96,14 +97,10 @@ class Inventory(models.Model):
 
     def clean(self):
         if self.current_stock < 0:
-            raise ValueError(
-                "Current stock cannot be negative."
-            )
-
+            raise ValidationError({"current_stock": "Current stock cannot be negative."})
+        
         if self.minimum_stock < 0:
-            raise ValueError(
-                "Minimum stock cannot be negative."
-            )
+            raise ValidationError({"minimum_stock": "Minimum stock cannot be negative."})
 
     @property
     def low_stock(self):

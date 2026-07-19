@@ -18,25 +18,51 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         # Admin -> All orders
         if user.is_superuser or user.role == UserRole.ADMIN:
-            return Order.objects.all().prefetch_related("items")
+            return (
+                Order.objects
+                .select_related(
+                    "customer",
+                    "employee",
+                    "boutique",
+                )
+                .prefetch_related("items")
+            )
 
         # Boutique Owner -> Own boutique orders
         elif user.role == UserRole.OWNER:
-            return Order.objects.filter(
-                owner=user
-            ).prefetch_related("items")
+            return (
+                Order.objects.filter(owner=user)
+                .select_related(
+                    "customer",
+                    "employee",
+                    "boutique",
+                )
+                .prefetch_related("items")
+            )
 
         # Tailor -> Assigned orders only
         elif user.role == UserRole.TAILOR:
-            return Order.objects.filter(
-                employee__user=user
-            ).prefetch_related("items")
+            return (
+                Order.objects.filter(employee__user=user)
+                .select_related(
+                    "customer",
+                    "employee",
+                    "boutique",
+                )
+                .prefetch_related("items")
+            )
 
         # Customer -> Own orders only
         elif user.role == UserRole.CUSTOMER:
-            return Order.objects.filter(
-                customer__user=user
-            ).prefetch_related("items")
+            return (
+                Order.objects.filter(customer__user=user)
+                .select_related(
+                    "customer",
+                    "employee",
+                    "boutique",
+                )
+                .prefetch_related("items")
+            )
 
         return Order.objects.none()
 
@@ -75,25 +101,51 @@ class OrderItemViewSet(viewsets.ModelViewSet):
 
         # Admin
         if user.is_superuser or user.role == UserRole.ADMIN:
-            return OrderItem.objects.select_related("order")
+            return (
+                OrderItem.objects
+                .select_related(
+                    "order",
+                    "order__customer",
+                    "order__employee",
+                    "order__boutique",
+                )
+            )
 
         # Owner
         elif user.role == UserRole.OWNER:
-            return OrderItem.objects.filter(
-                order__owner=user
-            ).select_related("order")
+            return (
+                OrderItem.objects.filter(order__owner=user)
+                .select_related(
+                    "order",
+                    "order__customer",
+                    "order__employee",
+                    "order__boutique",
+                )
+            )
 
         # Tailor
         elif user.role == UserRole.TAILOR:
-            return OrderItem.objects.filter(
-                order__employee__user=user
-            ).select_related("order")
+            return (
+                OrderItem.objects.filter(order__employee__user=user)
+                .select_related(
+                    "order",
+                    "order__customer",
+                    "order__employee",
+                    "order__boutique",
+                )
+            )
 
         # Customer
         elif user.role == UserRole.CUSTOMER:
-            return OrderItem.objects.filter(
-                order__customer__user=user
-            ).select_related("order")
+            return (
+                OrderItem.objects.filter(order__customer__user=user)
+                .select_related(
+                    "order",
+                    "order__customer",
+                    "order__employee",
+                    "order__boutique",
+                )
+            )
 
         return OrderItem.objects.none()
 

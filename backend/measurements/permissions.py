@@ -3,7 +3,7 @@ from rest_framework.permissions import BasePermission
 
 class IsMeasurementManager(BasePermission):
     """
-    Allows authenticated users to access measurement master data.
+    Allows authenticated users to access measurement data.
     """
 
     def has_permission(self, request, view):

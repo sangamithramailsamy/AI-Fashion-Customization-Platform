@@ -32,3 +32,5 @@ class NotificationAdmin(admin.ModelAdmin):
     )
 
     ordering = ("-created_at",)
+
+    list_per_page = 20

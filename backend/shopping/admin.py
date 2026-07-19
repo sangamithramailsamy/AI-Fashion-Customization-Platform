@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Wishlist, Cart, CartItem ,  ShippingAddress
+
+from .models import (
+    Wishlist,
+    Cart,
+    CartItem,
+    ShippingAddress,
+)
 
 
 @admin.register(Wishlist)
@@ -19,6 +25,13 @@ class WishlistAdmin(admin.ModelAdmin):
         "created_at",
     )
 
+    ordering = (
+        "-created_at",
+    )
+
+    list_per_page = 20
+
+
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
     list_display = (
@@ -30,6 +43,18 @@ class CartAdmin(admin.ModelAdmin):
     search_fields = (
         "customer__user__username",
     )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    ordering = (
+        "-updated_at",
+    )
+
+    list_per_page = 20
+
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
@@ -48,6 +73,13 @@ class CartItemAdmin(admin.ModelAdmin):
         "variant__design__name",
         "cart__customer__user__username",
     )
+
+    ordering = (
+        "-created_at",
+    )
+
+    list_per_page = 20
+
 
 @admin.register(ShippingAddress)
 class ShippingAddressAdmin(admin.ModelAdmin):
@@ -71,3 +103,9 @@ class ShippingAddressAdmin(admin.ModelAdmin):
         "customer__user__username",
         "city",
     )
+
+    ordering = (
+        "full_name",
+    )
+
+    list_per_page = 20

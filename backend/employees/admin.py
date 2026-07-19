@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import Employee
 
 
@@ -26,3 +27,14 @@ class EmployeeAdmin(admin.ModelAdmin):
         "joining_date",
         "role",
     )
+
+    ordering = (
+        "-created_at",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    list_per_page = 20

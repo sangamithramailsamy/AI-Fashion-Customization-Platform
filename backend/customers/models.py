@@ -37,9 +37,9 @@ class CustomerProfile(models.Model):
         blank=True,
     )
 
-    city = models.CharField(max_length=100)
+    city = models.CharField(max_length=1000,db_index=True,)
 
-    state = models.CharField(max_length=100)
+    state = models.CharField(max_length=1000,db_index=True,)
 
     country = models.CharField(max_length=100)
 
@@ -48,6 +48,9 @@ class CustomerProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.user.username
