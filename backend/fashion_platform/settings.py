@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,7 +29,6 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
-# Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -37,27 +37,33 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    "corsheaders",
+    "django_filters",
+
     "rest_framework",
     "rest_framework.authtoken",
+
+    "drf_spectacular",          
+    "drf_spectacular_sidecar",  
 
     "users",
     "accounts",
     "customers",
-    'boutiques',
-    'employees',
-    'orders',
-    'payments',
+    "boutiques",
+    "employees",
+    "orders",
+    "payments",
     "measurements",
     "catalog",
     "shopping",
     "discounts",
-    "reviews", 
+    "reviews",
     "notifications",
     "dashboard",
-    'core',
-    'production',
+    "core",
+    "production",
     "inventory",
-]
+] 
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -169,8 +175,17 @@ CORS_ALLOW_ALL_ORIGINS = True
 # DRF Spectacular
 SPECTACULAR_SETTINGS = {
     "TITLE": "AI Fashion Customization Platform API",
-    "DESCRIPTION": "Backend API for AI Fashion Customization Platform",
+    "DESCRIPTION": "Backend API Documentation",
     "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": False,
+}

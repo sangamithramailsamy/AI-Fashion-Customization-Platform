@@ -5,8 +5,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import RegisterSerializer, LoginSerializer
+from drf_spectacular.utils import extend_schema
 
-
+@extend_schema(request=RegisterSerializer)
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -34,19 +35,9 @@ class RegisterView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST,
         ) 
-    
+@extend_schema(request=LoginSerializer)    
 class LoginView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-
-        if serializer.is_valid():
-            user = serializer.validated_data["user"]
-
-    
-class LoginView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny] 
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)

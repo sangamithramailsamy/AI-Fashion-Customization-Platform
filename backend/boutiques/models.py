@@ -12,10 +12,10 @@ class Boutique(models.Model):
         ("INACTIVE", "Inactive"),
     ]
 
-    owner = models.OneToOneField(
+    owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="boutique"
+        related_name="boutiques"
     )
 
     boutique_name = models.CharField(max_length=200)
