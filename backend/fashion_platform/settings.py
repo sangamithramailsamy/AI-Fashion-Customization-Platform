@@ -173,11 +173,15 @@ MEDIA_ROOT = BASE_DIR / "media"
 CORS_ALLOW_ALL_ORIGINS = True
 
 # DRF Spectacular
+# DRF Spectacular
 SPECTACULAR_SETTINGS = {
     "TITLE": "AI Fashion Customization Platform API",
     "DESCRIPTION": "Backend API Documentation",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+
+    # Required for file upload fields
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

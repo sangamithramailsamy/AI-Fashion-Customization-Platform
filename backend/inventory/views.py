@@ -7,6 +7,7 @@ from .serializers import InventorySerializer
 from .permissions import IsInventoryManager
 
 from users.models import UserRole
+from boutiques.models import Boutique
 
 
 class InventoryViewSet(viewsets.ModelViewSet):
@@ -22,15 +23,29 @@ class InventoryViewSet(viewsets.ModelViewSet):
 
         # Boutique Owner -> Own boutique inventory
         elif user.role == UserRole.OWNER:
+
+            boutique = user.boutiques.first()
+
+            if not boutique:
+                return Inventory.objects.none()
+
             return Inventory.objects.filter(
-                boutique=user.boutique
+                boutique=boutique
             ).select_related("boutique")
 
-        # Tailor -> View inventory of owner's boutique
+        # Tailor -> View owner's boutique inventory
         elif user.role == UserRole.TAILOR:
+
             if hasattr(user, "employee_profile"):
+
+                owner = user.employee_profile.owner
+                boutique = owner.boutiques.first()
+
+                if not boutique:
+                    return Inventory.objects.none()
+
                 return Inventory.objects.filter(
-                    boutique=user.employee_profile.owner.boutique
+                    boutique=boutique
                 ).select_related("boutique")
 
             return Inventory.objects.none()
@@ -45,8 +60,15 @@ class InventoryViewSet(viewsets.ModelViewSet):
                 "Only boutique owners can add inventory."
             )
 
+        boutique = user.boutiques.first()
+
+        if not boutique:
+            raise PermissionDenied(
+                "Please create your boutique first."
+            )
+
         serializer.save(
-            boutique=user.boutique
+            boutique=boutique
         )
 
     def perform_update(self, serializer):

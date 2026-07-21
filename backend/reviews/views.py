@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import Review, ReviewMedia
 from .serializers import (
@@ -61,9 +62,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class ReviewMediaViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewMediaSerializer
-    permission_classes = [
-        IsAuthenticated,
-    ]
+    permission_classes = [IsAuthenticated]
+
+    # ✅ Required for file uploads
+    parser_classes = (
+        MultiPartParser,
+        FormParser,
+    )
 
     def get_queryset(self):
         if self.request.user.is_staff:

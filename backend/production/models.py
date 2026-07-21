@@ -9,13 +9,15 @@ from employees.models import Employee
 class Production(models.Model):
 
     STATUS_CHOICES = [
-        ("ASSIGNED", "Assigned"),
-        ("CUTTING", "Cutting"),
-        ("STITCHING", "Stitching"),
-        ("TRIAL", "Trial"),
-        ("ALTERATION", "Alteration"),
-        ("READY", "Ready"),
+        ("PENDING", "Pending"),
+        ("ASSIGNED", "Assigned to Tailor"),
+        ("CUTTING", "Fabric Cutting"),
+        ("STITCHING", "Stitching in Progress"),
+        ("TRIAL", "Ready for Trial"),
+        ("ALTERATION", "Under Alteration"),
+        ("READY", "Ready for Delivery"),
         ("DELIVERED", "Delivered"),
+        ("CANCELLED", "Cancelled"),
     ]
 
     boutique = models.ForeignKey(
