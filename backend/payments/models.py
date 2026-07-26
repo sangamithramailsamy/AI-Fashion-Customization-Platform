@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from orders.models import Order
 
+
 PAYMENT_METHOD_CHOICES = [
     ("CASH", "Cash"),
     ("UPI", "UPI"),
@@ -18,7 +19,22 @@ PAYMENT_METHOD_CHOICES = [
     ("OTHER", "Other"),
 ]
 
+PAYMENT_STATUS_CHOICES = [
+    ("CREATED", "Created"),
+    ("SUCCESS", "Success"),
+    ("FAILED", "Failed"),
+    ("REFUNDED", "Refunded"),
+]
+
+PAYMENT_TYPE_CHOICES = [
+    ("FULL", "Full Payment"),
+    ("ADVANCE", "Advance Payment"),
+    ("BALANCE", "Balance Payment"),
+]
+
+
 class Payment(models.Model):
+
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -43,6 +59,38 @@ class Payment(models.Model):
     amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+    )
+
+    payment_type = models.CharField(
+        max_length=20,
+        choices=PAYMENT_TYPE_CHOICES,
+        default="FULL",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS_CHOICES,
+        default="CREATED",
+    )
+
+    gateway = models.CharField(
+        max_length=30,
+        blank=True,
+        default="",
+    )
+
+    gateway_order_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        unique=True,
+    )
+
+    gateway_payment_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        unique=True,
     )
 
     reference_number = models.CharField(
@@ -74,8 +122,10 @@ class Payment(models.Model):
         ordering = ["-payment_date", "-created_at"]
 
     def __str__(self):
-        return f"{self.payment_number} - {self.order.order_number}"
-    
+        return (
+            f"{self.payment_number} - "
+            f"{self.order.order_number}"
+        )
 
     def clean(self):
         super().clean()
@@ -83,97 +133,126 @@ class Payment(models.Model):
         # Payment amount must be greater than zero
         if self.amount <= Decimal("0.00"):
             raise ValidationError({
-                "amount": "Payment amount must be greater than zero."
+                "amount": (
+                    "Payment amount must be greater than zero."
+                )
             })
 
-        # Cannot add payment to a cancelled order
+        # Payments cannot be created for cancelled orders
         if self.order.status == "CANCELLED":
             raise ValidationError(
                 "Cannot record payments for a cancelled order."
             )
 
-        # Reference number is required for non-cash payments
+        # A Razorpay payment initially has status CREATED.
+        # The reference/payment ID becomes available only
+        # after the gateway payment succeeds.
         if (
-            self.payment_method != "CASH"
+            self.status == "SUCCESS"
+            and self.payment_method != "CASH"
             and not (self.reference_number or "").strip()
         ):
             raise ValidationError({
                 "reference_number": (
-                    "Reference number is required for non-cash payments."
+                    "Reference number is required for "
+                    "successful non-cash payments."
                 )
             })
-        
-    
+
     def generate_payment_number(self):
         """
-        Generate payment number in the format:
-        PAY202607080001
+        Generate payment number in format:
+        PAY202607260001
         """
+
         today = timezone.now().date()
 
         prefix = f"PAY{today.strftime('%Y%m%d')}"
 
         last_payment = (
-            Payment.objects.filter(payment_number__startswith=prefix)
+            Payment.objects
+            .filter(payment_number__startswith=prefix)
             .order_by("-payment_number")
             .first()
         )
 
         if last_payment:
-            last_sequence = int(last_payment.payment_number[-4:])
+            last_sequence = int(
+                last_payment.payment_number[-4:]
+            )
             new_sequence = last_sequence + 1
         else:
             new_sequence = 1
 
         return f"{prefix}{new_sequence:04d}"
-    
 
     def update_order_balance(self):
         """
-        Update the order's advance paid and balance amount.
+        Update order payment totals using only
+        successfully completed payments.
         """
+
         total_paid = (
-            self.order.payments.aggregate(
-                total=Sum("amount")
-            )["total"]
+            self.order.payments
+            .filter(status="SUCCESS")
+            .aggregate(total=Sum("amount"))["total"]
             or Decimal("0.00")
         )
 
-        Order.objects.filter(pk=self.order.pk).update(
+        balance = self.order.total_amount - total_paid
+
+        # Safety guard
+        if balance < Decimal("0.00"):
+            balance = Decimal("0.00")
+
+        Order.objects.filter(
+            pk=self.order.pk
+        ).update(
             advance_paid=total_paid,
-            balance_amount=self.order.total_amount - total_paid,
+            balance_amount=balance,
         )
 
     def save(self, *args, **kwargs):
-        # Generate payment number for new payments
-        if not self.payment_number:
-            self.payment_number = self.generate_payment_number()
 
-        # Run model validations
+        # Generate payment number for new payment
+        if not self.payment_number:
+            self.payment_number = (
+                self.generate_payment_number()
+            )
+
+        # Run model validation
         self.full_clean()
 
         # Save payment
         super().save(*args, **kwargs)
 
-        # Update order balance
+        # Recalculate order payment balance
         self.update_order_balance()
 
     def delete(self, *args, **kwargs):
+
         order = self.order
 
-        # Delete the payment
+        # Delete payment
         super().delete(*args, **kwargs)
 
-        # Recalculate total paid
+        # Recalculate successful payments
         total_paid = (
-            order.payments.aggregate(
-                total=Sum("amount")
-            )["total"]
+            order.payments
+            .filter(status="SUCCESS")
+            .aggregate(total=Sum("amount"))["total"]
             or Decimal("0.00")
         )
 
-        # Update order directly
-        Order.objects.filter(pk=order.pk).update(
+        balance = order.total_amount - total_paid
+
+        # Safety guard
+        if balance < Decimal("0.00"):
+            balance = Decimal("0.00")
+
+        Order.objects.filter(
+            pk=order.pk
+        ).update(
             advance_paid=total_paid,
-            balance_amount=order.total_amount - total_paid,
+            balance_amount=balance,
         )

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Razorpay Test Payment</title>
+</head>
+
+<body>
+
+    <h1>AI Fashion - Razorpay Test</h1>
+
+    <label>JWT Access Token:</label>
+    <br>
+    <textarea
+        id="token"
+        rows="5"
+        cols="80"
+        placeholder="Paste CUSTOMER access token here">
+    </textarea>
+
+    <br><br>
+
+    <label>Order ID:</label>
+    <input
+        type="number"
+        id="orderId"
+        value="2"
+    >
+
+    <br><br>
+
+    <label>Amount:</label>
+    <input
+        type="number"
+        id="amount"
+        value="100"
+    >
+
+    <br><br>
+
+    <select id="paymentType">
+        <option value="ADVANCE">Advance Payment</option>
+        <option value="FULL">Full Payment</option>
+        <option value="BALANCE">Balance Payment</option>
+    </select>
+
+    <br><br>
+
+    <button id="payButton">
+        Pay with Razorpay
+    </button>
+
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <script>
+
+        document.getElementById("payButton").onclick = async function () {
+
+            const token =
+                document.getElementById("token").value.trim();
+
+            const orderId =
+                document.getElementById("orderId").value;
+
+            const amount =
+                document.getElementById("amount").value;
+
+            const paymentType =
+                document.getElementById("paymentType").value;
+
+
+            if (!token) {
+                alert("Please enter JWT access token.");
+                return;
+            }
+
+
+            try {
+
+                // STEP 1: Create Razorpay order using Django
+                const response = await fetch(
+                    "http://127.0.0.1:8000/api/payments/create-razorpay-order/",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + token
+                        },
+
+                        body: JSON.stringify({
+                            order_id: Number(orderId),
+                            amount: amount,
+                            payment_type: paymentType
+                        })
+                    }
+                );
+
+
+                const data = await response.json();
+
+                console.log("Django response:", data);
+
+
+                if (!response.ok) {
+                    alert(
+                        "Could not create Razorpay order.\n\n" +
+                        JSON.stringify(data)
+                    );
+
+                    return;
+                }
+
+
+                // STEP 2: Configure Razorpay Checkout
+                const options = {
+
+                    key: data.razorpay_key_id,
+
+                    amount: data.amount,
+
+                    currency: data.currency,
+
+                    name: "AI Fashion Customization Platform",
+
+                    description: paymentType + " Payment",
+
+                    order_id: data.razorpay_order_id,
+
+
+                    handler: function (response) {
+
+                        console.log(
+                            "Razorpay payment response:",
+                            response
+                        );
+
+                        alert(
+                            "Payment completed!\n\n" +
+                            "Payment ID: " +
+                            response.razorpay_payment_id
+                        );
+
+                    },
+
+
+                    theme: {
+                        color: "#000000"
+                    }
+
+                };
+
+
+                // STEP 3: Open Razorpay
+                const razorpayCheckout =
+                    new Razorpay(options);
+
+                razorpayCheckout.open();
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Something went wrong. Check browser console."
+                );
+
+            }
+
+        };
+
+    </script>
+
+</body>
+</html>
