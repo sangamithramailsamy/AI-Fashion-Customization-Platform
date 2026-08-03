@@ -17,7 +17,14 @@ export default function AccountOverviewPage() {
   const { wishlist } = useShop();
   const { orders } = useOrders();
   const { notifications, unreadCount } = useNotifications();
-  const firstName = user?.fullName.split(' ')[0] ?? 'Member';
+  const firstName =
+  user?.fullName
+    ? user.fullName.split(' ')[0]
+    : user?.username
+    ? user.username
+    : user?.email
+    ? user.email.split('@')[0]
+    : 'Member';
 
   const recentOrders = orders.slice(0, 2);
   const pendingReviewCount = orders

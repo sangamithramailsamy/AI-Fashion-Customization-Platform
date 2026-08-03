@@ -53,8 +53,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
       setProfile(p);
       setAddresses(a);
       setMeasurements(m);
-    } catch {
-      // graceful — keep nulls
+    } catch (error) {
+      console.error("CustomerContext load failed:", error);
     } finally {
       setLoading(false);
     }

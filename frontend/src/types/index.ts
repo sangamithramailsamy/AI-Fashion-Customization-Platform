@@ -71,7 +71,8 @@ export type UserRole = 'customer' | 'owner' | 'admin';
 
 export interface AuthUser {
   id: number;
-  fullName: string;
+  username?: string;
+  fullName?: string;
   email: string;
   phone?: string;
   avatar?: string;

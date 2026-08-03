@@ -31,7 +31,14 @@ export default function LoginPage() {
 
     try {
       const user = await login({ email, password });
-      notify(`Welcome back, ${user.fullName.split(' ')[0]}`, 'info');
+      const name =
+  user.fullName
+    ? user.fullName.split(' ')[0]
+    : user.username
+    ? user.username
+    : user.email.split('@')[0];
+
+notify(`Welcome back, ${name}`, 'info');
       navigate(from);
     } catch {
       setErrors({ password: 'Unable to sign in. Check your email and password.' });
