@@ -51,7 +51,7 @@ export { extractError };
 export const authService = {
   async login(payload: LoginPayload): Promise<AuthUser> {
     const res = await apiClient.post('/auth/login/', {
-      username: payload.email,
+      email: payload.email,
       password: payload.password,
     });
     const { access, refresh, user } = res.data as {

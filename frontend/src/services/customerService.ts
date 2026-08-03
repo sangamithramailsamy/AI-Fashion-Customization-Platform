@@ -5,11 +5,23 @@ import type {
   CustomerMeasurement,
 } from '@/types';
 
+console.log("CustomerService loaded");
+
 export const customerService = {
   async getProfile(): Promise<CustomerProfile> {
-    const res = await apiClient.get('/customer/profile/');
-    return res.data as CustomerProfile;
-  },
+  console.log("Calling /customer/profile");
+
+  try {
+      const res = await apiClient.get("/customer/profile/");
+
+      console.log("SUCCESS", res);
+
+      return res.data as CustomerProfile;
+  } catch (err) {
+    console.error("PROFILE ERROR", err);
+    throw err;
+  }
+},
   async updateProfile(profile: Partial<CustomerProfile>): Promise<CustomerProfile> {
     const res = await apiClient.patch('/customer/profile/', profile);
     return res.data as CustomerProfile;
