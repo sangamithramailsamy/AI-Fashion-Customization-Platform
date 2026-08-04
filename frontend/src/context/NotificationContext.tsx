@@ -23,7 +23,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const list = await notificationService.list();
-      setNotifications(list);
+
+if (Array.isArray(list)) {
+  setNotifications(list);
+} else {
+  console.log("Notification API returned:", list);
+  setNotifications([]);
+}
     } catch {
       // graceful
     } finally {
@@ -55,7 +61,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setNotifications((prev) => [notification, ...prev]);
   }, []);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = Array.isArray(notifications)
+  ? notifications.filter((n) => !n.read).length
+  : 0;
 
   const value: NotificationState = {
     notifications,

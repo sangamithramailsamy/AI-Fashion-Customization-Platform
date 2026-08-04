@@ -4,7 +4,7 @@ import type { Order, OrderStatus } from '@/types';
 
 export const orderService = {
   async list(): Promise<Order[]> {
-    const res = await apiClient.get('/orders/');
+    const res = await apiClient.get('/orders/orders/');
     return res.data as Order[];
   },
 

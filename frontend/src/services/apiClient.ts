@@ -31,9 +31,20 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const isOwner = (config as any)[OWNER_FLAG] === true;
   const token = isOwner ? getOwnerAccessToken() : getAccessToken();
+
+  console.log("========== AXIOS REQUEST ==========");
+  console.log("URL:", config.url);
+  console.log("Owner Request:", isOwner);
+  console.log("Token Found:", token);
+
   if (token) {
+    config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
+    console.log("Authorization header added");
+  } else {
+    console.log("No token found");
   }
+
   return config;
 });
 

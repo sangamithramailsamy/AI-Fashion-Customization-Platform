@@ -33,13 +33,13 @@ export const catalogService = {
   },
 
   async listCollections(): Promise<Collection[]> {
-    const res = await apiClient.get('/catalog/collections/');
+    const res = await apiClient.get('/catalog/categories/');
     return res.data as Collection[];
   },
 
   async getCollection(slug: string): Promise<Collection | null> {
     try {
-      const res = await apiClient.get(`/catalog/collections/${slug}/`);
+      const res = await apiClient.get(`/catalog/categories/${slug}/`);
       return res.data as Collection;
     } catch (err: any) {
       if (err.response?.status === 404) return null;
@@ -48,7 +48,7 @@ export const catalogService = {
   },
 
   async getProductsByCollection(slug: string): Promise<Product[]> {
-    const res = await apiClient.get(`/catalog/collections/${slug}/designs/`);
+    const res = await apiClient.get(`/catalog/categories/${slug}/designs/`);
     return res.data as Product[];
   },
 

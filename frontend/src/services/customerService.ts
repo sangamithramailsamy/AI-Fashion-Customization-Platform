@@ -9,19 +9,26 @@ console.log("CustomerService loaded");
 
 export const customerService = {
   async getProfile(): Promise<CustomerProfile> {
-  console.log("Calling /customer/profile");
+    console.log("========== PROFILE REQUEST ==========");
 
-  try {
+    try {
       const res = await apiClient.get("/customer/profile/");
 
-      console.log("SUCCESS", res);
+      console.log("Status:", res.status);
+      console.log("Data:", res.data);
 
       return res.data as CustomerProfile;
-  } catch (err) {
-    console.error("PROFILE ERROR", err);
-    throw err;
-  }
-},
+    } catch (err: any) {
+      console.log("========== PROFILE ERROR ==========");
+      console.log(err);
+      console.log("Message:", err.message);
+      console.log("Code:", err.code);
+      console.log("Response:", err.response);
+      console.log("Request:", err.request);
+
+      throw err;
+    }
+  },
   async updateProfile(profile: Partial<CustomerProfile>): Promise<CustomerProfile> {
     const res = await apiClient.patch('/customer/profile/', profile);
     return res.data as CustomerProfile;

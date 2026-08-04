@@ -43,26 +43,41 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    setLoading(true);
+  setLoading(true);
+
+  try {
+    // Profile
+    const profile = await customerService.getProfile();
+    setProfile(profile);
+
+    // Addresses
     try {
-      const [p, a, m] = await Promise.all([
-        customerService.getProfile(),
-        addressService.list(),
-        measurementService.get(),
-      ]);
-      setProfile(p);
-      setAddresses(a);
-      setMeasurements(m);
-    } catch (error) {
-      console.error("CustomerContext load failed:", error);
-    } finally {
-      setLoading(false);
+      const addresses = await addressService.list();
+      setAddresses(addresses);
+    } catch (err) {
+      console.log("Addresses API not ready");
+      setAddresses([]);
     }
-  }, []);
+
+    // Measurements
+    try {
+      const measurements = await measurementService.get();
+      setMeasurements(measurements);
+    } catch (err) {
+      console.log("Measurements API not ready");
+      setMeasurements(null);
+    }
+
+  } catch (error) {
+    console.error("CustomerContext load failed:", error);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   useEffect(() => {
     load();
-  }, [load]);
+}, [load]);
 
   const updateProfile = useCallback(async (next: CustomerProfile) => {
     const saved = await customerService.updateProfile(next);
