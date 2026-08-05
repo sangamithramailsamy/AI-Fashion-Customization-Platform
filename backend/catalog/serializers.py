@@ -24,21 +24,60 @@ class DesignVariantSerializer(serializers.ModelSerializer):
 
 
 class DesignSerializer(serializers.ModelSerializer):
+    images = DesignImageSerializer(many=True, read_only=True)
+    variants = DesignVariantSerializer(many=True, read_only=True)
 
-    images = DesignImageSerializer(
-        many=True,
-        read_only=True
+    price = serializers.DecimalField(
+        source="base_price",
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
     )
 
-    variants = DesignVariantSerializer(
-        many=True,
-        read_only=True
+    image = serializers.SerializerMethodField()
+
+    featured = serializers.BooleanField(
+        source="is_featured",
+        read_only=True,
+    )
+
+    newArrival = serializers.BooleanField(
+        source="is_new_arrival",
+        read_only=True,
     )
 
     class Meta:
         model = Design
-        fields = "__all__"
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "description",
+            "thumbnail",
+            "base_price",
+            "price",
+            "image",
+            "featured",
+            "newArrival",
+            "images",
+            "variants",
+            "is_featured",
+            "is_new_arrival",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "category",
+        ]
 
+    def get_image(self, obj):
+        request = self.context.get("request")
+
+        if obj.thumbnail:
+            if request:
+                return request.build_absolute_uri(obj.thumbnail.url)
+            return obj.thumbnail.url
+
+        return None
 
 class CollectionCategorySerializer(serializers.ModelSerializer):
 

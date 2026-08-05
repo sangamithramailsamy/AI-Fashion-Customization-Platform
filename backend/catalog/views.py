@@ -47,11 +47,18 @@ class DesignViewSet(viewsets.ModelViewSet):
         "images",
         "variants",
     )
+
     serializer_class = DesignSerializer
+
     permission_classes = [
         IsAuthenticatedOrReadOnly,
         IsCatalogManager,
     ]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
 
 
 class DesignImageViewSet(viewsets.ModelViewSet):
