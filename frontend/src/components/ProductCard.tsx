@@ -10,8 +10,14 @@ interface Props {
   index?: number;
 }
 
-function formatPrice(n: number) {
-  return '₹' + n.toLocaleString('en-IN');
+function formatPrice(n: any) {
+  console.log("PRICE =", n);
+
+  if (n === undefined || n === null) {
+    return "₹0";
+  }
+
+  return "₹" + Number(n).toLocaleString("en-IN");
 }
 
 export default function ProductCard({ product, index = 0 }: Props) {

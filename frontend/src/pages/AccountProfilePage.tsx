@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Check } from 'lucide-react';
 import { useCustomer } from '@/context/CustomerContext';
@@ -14,15 +14,22 @@ const GENDERS: { value: Gender; label: string }[] = [
 
 export default function AccountProfilePage() {
   const { profile, updateProfile } = useCustomer();
+  console.log("PROFILE DATA:", profile);
   const { notify } = useToast();
+
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<CustomerProfile | null>(profile);
+  const [form, setForm] = useState<CustomerProfile | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    if (profile) {
+      setForm(profile);
+    }
+  }, [profile]);
 
-  // Keep form in sync when profile loads
-  if (profile && !form) setForm(profile);
-  if (!profile || !form) return <p className="font-body text-muted">Loading profile…</p>;
+  if (!profile || !form) {
+    return <p className="font-body text-muted">Loading profile...</p>;
+  }
 
   const set = <K extends keyof CustomerProfile>(key: K, value: CustomerProfile[K]) =>
     setForm((f) => (f ? { ...f, [key]: value } : f));
@@ -76,7 +83,7 @@ export default function AccountProfilePage() {
       <div className="flex items-center gap-5 mb-8">
         <div className="relative">
           <div className="h-20 w-20 rounded-full bg-surface border border-token flex items-center justify-center font-display text-2xl" style={{ color: 'var(--primary)' }}>
-            {form.fullName.charAt(0).toUpperCase()}
+            {(form.fullName || "").charAt(0).toUpperCase()}
           </div>
           {editing && (
             <button

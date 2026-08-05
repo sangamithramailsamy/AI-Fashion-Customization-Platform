@@ -15,6 +15,10 @@ type Tab = 'published' | 'pending';
 export default function AccountReviewsPage() {
   const { reviews, removeReview } = useReviews();
   const { orders } = useOrders();
+  
+  console.log("ORDERS:", orders);
+  console.log("REVIEWS:", reviews);
+
   const { notify } = useToast();
   const [tab, setTab] = useState<Tab>('published');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);

@@ -8,8 +8,58 @@ import type { Product, Collection } from '@/types';
 
 export const catalogService = {
   async listProducts(): Promise<Product[]> {
-    const res = await apiClient.get('/catalog/designs/');
-    return res.data as Product[];
+    const res = await apiClient.get("/catalog/designs/");
+
+    return res.data.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+
+      price: Number(item.price),
+      originalPrice: Number(item.price),
+
+      image: item.image,
+
+      category: "Boutique Creation",
+
+      collection: "",
+
+      stock:
+        item.variants?.reduce(
+        (sum: number, v: any) => sum + v.stock,
+        0
+      ) ?? 0,
+
+      rating: 5,
+
+      reviewCount: 0,
+
+      featured: item.featured,
+
+      newArrival: item.newArrival,
+
+      customizable: true,
+
+      badge: item.newArrival ? "New" : undefined,
+
+      colors:
+        item.variants?.map((v: any) => ({
+        name: v.color,
+        hex: "#000000",
+      })) ?? [],
+
+      sizes:
+        item.variants?.map((v: any) => ({
+        label: v.size,
+        inStock: v.stock > 0,
+      })) ?? [],
+
+    images: [],
+
+    popularity: 0,
+
+    createdAt: item.created_at,
+    }));
   },
 
   async getFeatured(): Promise<Product[]> {

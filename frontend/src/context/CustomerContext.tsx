@@ -48,7 +48,9 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   try {
     // Profile
     const profile = await customerService.getProfile();
+    console.log("PROFILE FROM API:", profile);
     setProfile(profile);
+    console.log("Profile state updated");
 
     // Addresses
     try {

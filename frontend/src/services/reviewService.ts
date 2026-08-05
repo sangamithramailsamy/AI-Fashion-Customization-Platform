@@ -14,21 +14,24 @@ export interface ReviewSubmission {
 
 export const reviewService = {
   async list(): Promise<ReviewItem[]> {
-    const res = await apiClient.get('/reviews/');
+    const res = await apiClient.get('/reviews/reviews/');
+
+    console.log("REVIEW API RESPONSE:", res.data);
+
     return res.data as ReviewItem[];
   },
 
   async submit(submission: ReviewSubmission): Promise<ReviewItem> {
-    const res = await apiClient.post('/reviews/', submission);
+    const res = await apiClient.post('/reviews/reviews/', submission);
     return res.data as ReviewItem;
   },
 
   async update(id: string, updates: Partial<ReviewItem>): Promise<ReviewItem> {
-    const res = await apiClient.patch(`/reviews/${id}/`, updates);
+    const res = await apiClient.patch(`/reviews/reviews/${id}/`, updates);
     return res.data as ReviewItem;
   },
 
   async remove(id: string): Promise<void> {
-    await apiClient.delete(`/reviews/${id}/`);
+    await apiClient.delete(`/reviews/reviews/${id}/`);
   },
 };
