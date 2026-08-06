@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from catalog.models import DesignVariant
 
 from .models import (
     Section,

@@ -195,10 +195,10 @@ export default function CheckoutPage() {
                     {user ? (
                       <div className="flex items-center gap-4 p-4 border border-token bg-token-alt">
                         <span className="h-12 w-12 rounded-full bg-primary flex items-center justify-center font-display text-xl" style={{ color: 'var(--btn-text)' }}>
-                          {user.fullName.charAt(0)}
+                          {(user.fullName ?? user.username ?? "U").charAt(0)}
                         </span>
                         <div>
-                          <p className="font-display text-lg text-token">{user.fullName}</p>
+                          <p className="font-display text-lg text-token">{user.fullName ?? user.username}</p>
                           <p className="font-body text-sm text-muted">{user.email}</p>
                         </div>
                         <Check size={20} className="ml-auto" style={{ color: 'var(--anim-olive)' }} />

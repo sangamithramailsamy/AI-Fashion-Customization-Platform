@@ -1,6 +1,9 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import Cart
 
 from .models import (
     Wishlist,
@@ -8,6 +11,8 @@ from .models import (
     CartItem,
     ShippingAddress,
 )
+
+from catalog.models import DesignVariant
 
 from .serializers import (
     WishlistSerializer,
@@ -47,6 +52,18 @@ class WishlistViewSet(viewsets.ModelViewSet):
         serializer.save(
             customer=self.request.user.customer_profile
         )
+
+    @action(detail=False, methods=["delete"])
+    def remove(self, request):
+        design_id = request.data.get("design")
+
+        Wishlist.objects.filter(
+            customer=request.user.customer_profile,
+            design_id=design_id,
+        ).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 class CartViewSet(viewsets.ModelViewSet):
@@ -102,15 +119,24 @@ class CartItemViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        cart = serializer.validated_data["cart"]
+        cart, created = Cart.objects.get_or_create(
+            customer=self.request.user.customer_profile
+        )
 
-        if cart.customer.user != self.request.user:
-            raise PermissionDenied(
-                "You cannot add items to another customer's cart."
-            )
+        product_id = self.request.data.get("productId")
+        size = self.request.data.get("size")
+        color = self.request.data.get("color")
 
-        serializer.save()
+        variant = DesignVariant.objects.get(
+            design_id=product_id,
+            size=size,
+            color=color,
+        )
 
+        serializer.save(
+            cart=cart,
+            variant=variant,
+        )
 
 class ShippingAddressViewSet(viewsets.ModelViewSet):
     serializer_class = ShippingAddressSerializer

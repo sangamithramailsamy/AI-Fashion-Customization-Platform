@@ -11,7 +11,7 @@ export interface CartItem {
 }
 
 interface ShopState {
-  wishlist: number[];
+  wishlist: { id: number; design: number }[];
   cart: CartItem[];
   notifications: number;
   loading: boolean;
@@ -36,7 +36,7 @@ function sameLine(a: CartItem, productId: number, size: string, color: string) {
 export function ShopProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const { getProductById } = useCatalog();
-  const [wishlist, setWishlist] = useState<number[]>([]);
+  const [wishlist, setWishlist] = useState<{ id: number; design: number }[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [notifications, setNotifications] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -56,7 +56,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         apiClient.get('/shopping/wishlist/').catch(() => ({ data: [] })),
       ]);
       setCart((cartRes.data as CartItem[]) ?? []);
-      setWishlist(((wishRes.data as { product_id: number }[]) ?? []).map((w) => w.product_id));
+      setWishlist(wishRes.data ?? []);
     } catch {
       // graceful — keep empty
     } finally {
@@ -70,32 +70,45 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
   const toggleWishlist = useCallback(
     async (id: number) => {
-      const isWishedNow = wishlist.includes(id);
-      setWishlist((w) => (isWishedNow ? w.filter((x) => x !== id) : [...w, id]));
-      try {
-        if (isWishedNow) {
-          await apiClient.delete('/shopping/wishlist/', { data: { product_id: id } });
-        } else {
-          await apiClient.post('/shopping/wishlist/', { product_id: id });
+      const item = wishlist.find((w) => w.design === id);
+
+      if (item) {
+        try {
+          await apiClient.delete(`/shopping/wishlist/${item.id}/`);
+          await loadFromApi();
+        } catch (error) {
+          console.error(error);
         }
-      } catch {
-        // revert on failure
-        setWishlist((w) => (isWishedNow ? [...w, id] : w.filter((x) => x !== id)));
+      } else {
+        try {
+          await apiClient.post("/shopping/wishlist/", {
+            design: id,
+          });
+          await loadFromApi();
+        } catch (error) {
+          console.error(error);
+        }
       }
     },
-    [wishlist]
+    [wishlist, loadFromApi]
   );
+  const isWished = useCallback((id: number) => {return wishlist.some((item) => item.design === id);},[wishlist]);
 
-  const isWished = useCallback((id: number) => wishlist.includes(id), [wishlist]);
+  const removeFromWishlist = useCallback(
+    async(productId: number) => {
+      const item = wishlist.find((w) => w.design === productId);
 
-  const removeFromWishlist = useCallback(async (id: number) => {
-    setWishlist((w) => w.filter((x) => x !== id));
-    try {
-      await apiClient.delete('/shopping/wishlist/', { data: { product_id: id } });
-    } catch {
-      // graceful
-    }
-  }, []);
+      if (!item) return;
+
+      try {
+        await apiClient.delete(`/shopping/wishlist/${item.id}/`);
+        await loadFromApi();
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [wishlist, loadFromApi]
+  );
 
   const addToCart = useCallback(
     async (item: CartItem) => {
@@ -111,7 +124,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         return [...c, item];
       });
       try {
-        await apiClient.post('/shopping/cart/', item);
+       //wait apiClient.post('/shopping/cart-items/', item);
       } catch {
         // graceful
       }
@@ -137,11 +150,6 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const removeFromCart = useCallback(
     async (productId: number, size: string, color: string) => {
       setCart((c) => c.filter((x) => !sameLine(x, productId, size, color)));
-      try {
-        await apiClient.delete('/shopping/cart/', { data: { productId, size, color } });
-      } catch {
-        // graceful
-      }
     },
     []
   );
@@ -149,10 +157,11 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const moveCartToWishlist = useCallback(
     async (productId: number, size: string, color: string) => {
       setCart((c) => c.filter((x) => !sameLine(x, productId, size, color)));
-      setWishlist((w) => (w.includes(productId) ? w : [...w, productId]));
       try {
         await apiClient.delete('/shopping/cart/', { data: { productId, size, color } });
-        await apiClient.post('/shopping/wishlist/', { product_id: productId });
+        await apiClient.post("/shopping/wishlist/", {design: productId,});
+
+await loadFromApi();
       } catch {
         // graceful
       }
@@ -171,7 +180,12 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
   const clearNotification = useCallback(() => setNotifications(0), []);
 
+
+  console.log("Cart =", cart);
+
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  console.log("Cart Count =", cartCount);
 
   const value: ShopState = {
     wishlist,

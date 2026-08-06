@@ -15,8 +15,8 @@ export default function WishlistPage() {
   const { notify } = useToast();
 
   const items = wishlist
-    .map((id) => getProductById(id))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p));
+  .map((item) => getProductById(item.design))
+  .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
   if (items.length === 0) {
     return (
