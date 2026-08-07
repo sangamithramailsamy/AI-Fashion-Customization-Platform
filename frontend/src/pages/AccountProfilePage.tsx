@@ -33,8 +33,10 @@ export default function AccountProfilePage() {
     return <p className="font-body text-muted">Loading profile...</p>;
   }
 
-  const set = <K extends keyof CustomerProfile>(key: K, value: CustomerProfile[K]) =>
-    setForm((f) => (f ? { ...f, [key]: value } : f));
+  const set = <K extends keyof CustomerProfile,>(
+  key: K,
+  value: CustomerProfile[K]
+) => setForm((f) => (f ? { ...f, [key]: value } : f));
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
@@ -83,8 +85,8 @@ export default function AccountProfilePage() {
   };
 
   const handleImageChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
