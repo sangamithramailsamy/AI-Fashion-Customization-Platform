@@ -1,4 +1,6 @@
 from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from orders.models import Order
 
 from .permissions import IsMeasurementManager
 
@@ -8,6 +10,7 @@ from .models import (
     NeckType,
     NeckMeasurement,
     CommonMeasurement,
+    CustomerMeasurement,
     MeasurementVideo,
 )
 
@@ -18,6 +21,7 @@ from .serializers import (
     NeckMeasurementSerializer,
     CommonMeasurementSerializer,
     MeasurementVideoSerializer,
+    CustomerMeasurementSerializer,
 )
 
 
@@ -83,3 +87,35 @@ class MeasurementVideoView(generics.ListAPIView):
     queryset = MeasurementVideo.objects.all()
     serializer_class = MeasurementVideoSerializer
     permission_classes = [IsMeasurementManager]
+
+
+class CustomerMeasurementView(generics.ListCreateAPIView):
+    serializer_class = CustomerMeasurementSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        latest_order = (
+            Order.objects.filter(
+                customer__user=self.request.user
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
+        if not latest_order:
+            return CustomerMeasurement.objects.none()
+
+        return CustomerMeasurement.objects.filter(
+            order=latest_order
+        )
+
+    def perform_create(self, serializer):
+        latest_order = (
+            Order.objects.filter(
+                customer__user=self.request.user
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
+        serializer.save(order=latest_order)

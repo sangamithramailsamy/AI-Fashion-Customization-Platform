@@ -7,6 +7,7 @@ from .views import (
     NeckMeasurementListView,
     CommonMeasurementListView,
     MeasurementVideoView,
+    CustomerMeasurementView,
 )
 
 urlpatterns = [
@@ -44,5 +45,11 @@ urlpatterns = [
         "video/",
         MeasurementVideoView.as_view(),
         name="measurement-video",
+    ),
+
+    path(
+        "customer/",
+        CustomerMeasurementView.as_view(),
+        name="customer-measurements",
     ),
 ]

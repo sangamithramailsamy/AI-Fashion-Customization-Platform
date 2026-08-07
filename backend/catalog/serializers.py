@@ -10,22 +10,27 @@ from .models import (
 
 
 class DesignImageSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = DesignImage
         fields = "__all__"
 
 
 class DesignVariantSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = DesignVariant
         fields = "__all__"
 
 
 class DesignSerializer(serializers.ModelSerializer):
-    images = DesignImageSerializer(many=True, read_only=True)
-    variants = DesignVariantSerializer(many=True, read_only=True)
+    images = DesignImageSerializer(
+        many=True,
+        read_only=True
+    )
+
+    variants = DesignVariantSerializer(
+        many=True,
+        read_only=True
+    )
 
     price = serializers.DecimalField(
         source="base_price",
@@ -43,6 +48,12 @@ class DesignSerializer(serializers.ModelSerializer):
 
     newArrival = serializers.BooleanField(
         source="is_new_arrival",
+        read_only=True,
+    )
+
+    # ⭐ ADD THIS
+    category_slug = serializers.CharField(
+        source="category.slug",
         read_only=True,
     )
 
@@ -67,6 +78,7 @@ class DesignSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "category",
+            "category_slug",
         ]
 
     def get_image(self, obj):
@@ -79,23 +91,47 @@ class DesignSerializer(serializers.ModelSerializer):
 
         return None
 
-class CollectionCategorySerializer(serializers.ModelSerializer):
 
+class CollectionCategorySerializer(serializers.ModelSerializer):
     designs = DesignSerializer(
         many=True,
-        read_only=True
+        read_only=True,
     )
+
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = CollectionCategory
-        fields = "__all__"
+        fields = [
+            "id",
+            "section",
+            "name",
+            "slug",
+            "description",
+            "cover_image",
+            "image",
+            "display_order",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "designs",
+        ]
+
+    def get_image(self, obj):
+        request = self.context.get("request")
+
+        if obj.cover_image:
+            if request:
+                return request.build_absolute_uri(obj.cover_image.url)
+            return obj.cover_image.url
+
+        return None
 
 
 class SectionSerializer(serializers.ModelSerializer):
-
     categories = CollectionCategorySerializer(
         many=True,
-        read_only=True
+        read_only=True,
     )
 
     class Meta:
