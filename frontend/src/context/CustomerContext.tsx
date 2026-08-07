@@ -4,6 +4,9 @@ import {
   addressService,
   measurementService,
 } from '@/services/customerService';
+
+import { getAccessToken } from "@/services/apiConfig";
+
 import type {
   CustomerProfile,
   ShippingAddress,
@@ -18,7 +21,7 @@ interface CustomerState {
   hasMeasurements: boolean;
   defaultAddress: ShippingAddress | null;
   // profile
-  updateProfile: (profile: CustomerProfile) => Promise<void>;
+  updateProfile: (data: FormData) => Promise<void>;
   // addresses
   saveAddresses: (addresses: ShippingAddress[]) => Promise<void>;
   addAddress: (addr: ShippingAddress) => Promise<void>;
@@ -43,55 +46,43 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-  setLoading(true);
+    console.log("LOAD STARTED");
 
-  try {
-    // Profile
+    setLoading(true);
+
     try {
+      console.log("Calling Profile API...");
+
       const profile = await customerService.getProfile();
+
+      console.log("PROFILE RECEIVED:", profile);
+
       setProfile(profile);
+
+      console.log("Profile saved to state");
     } catch (err) {
-      console.error("Profile:", err);
+      console.error("PROFILE ERROR:", err);
       setProfile(null);
+    } finally {
+      setLoading(false);
+      console.log("LOAD FINISHED");
     }
-
-    // Addresses
-    try {
-      const addresses = await addressService.list();
-      setAddresses(addresses);
-    } catch (err) {
-      console.log("Addresses API not ready");
-      setAddresses([]);
-    }
-
-    // Measurements
-    try {
-      const measurements = await measurementService.get();
-      setMeasurements(measurements);
-    } catch (err) {
-      console.log("Measurements API not ready");
-      setMeasurements(null);
-    }
-
-  } finally {
-    setLoading(false);
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("access");
+  const token = getAccessToken();
 
-    if (token) {
-      load();
-    } else {
-      setLoading(false);
-    }
-  }, [load]);
+  if (token) {
+    load();
+  } else {
+    setLoading(false);
+  }
+}, [load]);
 
-  const updateProfile = useCallback(async (next: CustomerProfile) => {
-    const saved = await customerService.updateProfile(next);
+  const updateProfile = useCallback(async (data: FormData) => {
+    const saved = await customerService.updateProfile(data);
     setProfile(saved);
-  }, []);
+}, []);
 
   const saveAddresses = useCallback(async (list: ShippingAddress[]) => {
     // Replace the entire address list via the API by syncing each entry.

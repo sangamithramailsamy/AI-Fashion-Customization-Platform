@@ -29,9 +29,18 @@ export const customerService = {
       throw err;
     }
   },
-  async updateProfile(profile: Partial<CustomerProfile>): Promise<CustomerProfile> {
-    const res = await apiClient.patch('/customer/profile/', profile);
-    return res.data as CustomerProfile;
+  async updateProfile(formData: FormData): Promise<CustomerProfile> {
+    const res = await apiClient.patch(
+        "/customer/profile/",
+        formData,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }
+    );
+
+    return res.data;
   },
 };
 

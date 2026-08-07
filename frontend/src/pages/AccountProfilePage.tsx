@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect,useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Check } from 'lucide-react';
 import { useCustomer } from '@/context/CustomerContext';
@@ -7,9 +7,9 @@ import { FormField } from '@/components/FormField';
 import type { CustomerProfile, Gender } from '@/types';
 
 const GENDERS: { value: Gender; label: string }[] = [
-  { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other' },
-  { value: 'prefer-not', label: 'Prefer not to say' },
+  { value: 'FEMALE', label: 'Female' },
+  { value: 'MALE', label: 'Male' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 export default function AccountProfilePage() {
@@ -21,6 +21,8 @@ export default function AccountProfilePage() {
   const [form, setForm] = useState<CustomerProfile | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   useEffect(() => {
     if (profile) {
       setForm(profile);
@@ -47,22 +49,56 @@ export default function AccountProfilePage() {
 
   const handleSave = async () => {
     if (!validate()) return;
+
     setSaving(true);
+
     try {
-      await updateProfile(form);
-      notify('Profile updated', 'info');
-      setEditing(false);
-    } catch {
-      notify('Unable to save profile', 'remove');
+        const data = new FormData();
+
+        data.append("fullName", form.fullName);
+        data.append("gender", form.gender ?? "");
+        data.append("dob", form.dob ?? "");
+
+        if (selectedImage) {
+            data.append("profile_image", selectedImage);
+        }
+
+        await updateProfile(data);
+
+        notify("Profile updated", "info");
+
+        setEditing(false);
+    } catch (err) {
+        console.error(err);
+        notify("Unable to save profile", "remove");
     } finally {
-      setSaving(false);
+        setSaving(false);
     }
-  };
+};
 
   const handleCancel = () => {
     setForm(profile);
     setErrors({});
     setEditing(false);
+  };
+
+  const handleImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setSelectedImage(file);
+
+    setForm((prev) =>
+      prev
+        ? {
+            ...prev,
+            profile_image_url: URL.createObjectURL(file),
+          }
+        : prev
+    );
   };
 
   return (
@@ -81,26 +117,55 @@ export default function AccountProfilePage() {
 
       {/* Avatar */}
       <div className="flex items-center gap-5 mb-8">
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleImageChange}
+        />
+
         <div className="relative">
-          <div className="h-20 w-20 rounded-full bg-surface border border-token flex items-center justify-center font-display text-2xl" style={{ color: 'var(--primary)' }}>
-            {(form.fullName || "").charAt(0).toUpperCase()}
+
+          <div className="h-20 w-20 rounded-full overflow-hidden border border-token bg-surface flex items-center justify-center">
+            {form.profile_image_url ? (
+              <img
+                src={form.profile_image_url}
+                alt={form.fullName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="font-display text-2xl">
+                {(form.fullName || "").charAt(0).toUpperCase()}
+              </span>
+            )}
           </div>
+
           {editing && (
-            <button
-              type="button"
-              className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center"
-              style={{ color: 'var(--btn-text)' }}
-              aria-label="Change profile image"
-            >
-              <Camera size={15} />
-            </button>
+              <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center"
+                  style={{ color: "var(--btn-text)" }}
+              >
+                  <Camera size={15} />
+              </button>
           )}
-        </div>
-        <div>
-          <p className="font-display text-xl text-token">{form.fullName}</p>
-          <p className="font-body text-sm text-muted">{form.email}</p>
-        </div>
+
       </div>
+
+      <div>
+          <p className="font-display text-xl text-token">
+              {form.fullName}
+          </p>
+
+          <p className="font-body text-sm text-muted">
+              {form.email}
+          </p>
+      </div>
+
+    </div>
 
       <motion.div layout className="bg-surface border border-token p-6 md:p-8">
         <div className="grid sm:grid-cols-2 gap-5">

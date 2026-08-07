@@ -109,7 +109,7 @@ export interface RegisterPayload {
 
 // ---------- Customer Profile ----------
 
-export type Gender = 'female' | 'other' | 'prefer-not';
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
 
 export interface CustomerProfile {
   id: number;
@@ -117,6 +117,7 @@ export interface CustomerProfile {
   email: string;
   phone: string;
   dob?: string;
+  profile_image_url?: string;
   gender?: Gender;
   avatar?: string;
 }

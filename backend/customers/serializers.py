@@ -7,6 +7,23 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
     phone = serializers.CharField(source="user.phone_number", read_only=True)
 
+    profile_image = serializers.FileField(
+        source="user.profile_image",
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
+
+    profile_image_url = serializers.SerializerMethodField()
+
+    def get_profile_image_url(self, obj):
+        if obj.user.profile_image:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(obj.user.profile_image.url)
+            return obj.user.profile_image.url
+        return None
+
     fullName = serializers.SerializerMethodField()
 
     dob = serializers.DateField(
@@ -17,6 +34,8 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         full_name = self.initial_data.get("fullName")
+
+        user_data = validated_data.pop("user", {})
 
         if full_name is not None:
             parts = full_name.strip().split(" ", 1)
@@ -32,6 +51,10 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
         if "gender" in validated_data:
             instance.gender = validated_data["gender"]
 
+        if "profile_image" in user_data:
+            instance.user.profile_image = user_data["profile_image"]
+            instance.user.save()
+
         instance.save()
         return instance
 
@@ -39,6 +62,8 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
         model = CustomerProfile
         fields = (
             "id",
+            "profile_image",
+            "profile_image_url",
             "fullName",
             "email",
             "phone",
