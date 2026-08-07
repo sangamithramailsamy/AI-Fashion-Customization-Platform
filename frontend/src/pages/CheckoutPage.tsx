@@ -545,8 +545,8 @@ export default function CheckoutPage() {
                             couponDiscount: discount > 0 ? discount : undefined,
                             deliveryCharge: delivery,
                             shippingAddress: selectedAddress!,
-                            customerName: user!.fullName,
-                            customerEmail: user!.email,
+                            customerName: user?.fullName ?? user?.username ?? "",
+                            customerEmail: user?.email ?? "",
                             createdAt: new Date().toISOString(),
                             updatedAt: new Date().toISOString(),
                           };

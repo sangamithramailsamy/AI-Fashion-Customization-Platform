@@ -47,10 +47,13 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
 
   try {
     // Profile
-    const profile = await customerService.getProfile();
-    console.log("PROFILE FROM API:", profile);
-    setProfile(profile);
-    console.log("Profile state updated");
+    try {
+      const profile = await customerService.getProfile();
+      setProfile(profile);
+    } catch (err) {
+      console.error("Profile:", err);
+      setProfile(null);
+    }
 
     // Addresses
     try {
@@ -70,16 +73,20 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
       setMeasurements(null);
     }
 
-  } catch (error) {
-    console.error("CustomerContext load failed:", error);
   } finally {
     setLoading(false);
   }
 }, []);
 
   useEffect(() => {
-    load();
-}, [load]);
+    const token = localStorage.getItem("access");
+
+    if (token) {
+      load();
+    } else {
+      setLoading(false);
+    }
+  }, [load]);
 
   const updateProfile = useCallback(async (next: CustomerProfile) => {
     const saved = await customerService.updateProfile(next);

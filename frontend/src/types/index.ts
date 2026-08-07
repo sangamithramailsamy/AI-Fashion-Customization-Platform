@@ -56,8 +56,18 @@ export interface Collection {
   name: string;
   description: string;
   longDescription?: string;
+
+  image: string;
+
   itemCount: number;
-  pattern: 'kolam' | 'slant' | 'textile' | 'shimmer' | 'casual' | 'editorial';
+
+  pattern:
+    | "kolam"
+    | "slant"
+    | "textile"
+    | "shimmer"
+    | "casual"
+    | "editorial";
 }
 
 export interface NavItem {

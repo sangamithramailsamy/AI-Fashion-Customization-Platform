@@ -22,8 +22,8 @@ export const catalogService = {
 
       category: "Boutique Creation",
 
-      collection: "",
-
+      collection: item.category?.slug ?? "",
+      
       stock:
         item.variants?.reduce(
         (sum: number, v: any) => sum + v.stock,
@@ -83,14 +83,42 @@ export const catalogService = {
   },
 
   async listCollections(): Promise<Collection[]> {
-    const res = await apiClient.get('/catalog/categories/');
-    return res.data as Collection[];
+    const res = await apiClient.get("/catalog/categories/");
+
+    return res.data.map((item: any) => ({
+      id: String(item.id),
+      slug: item.slug,
+      name: item.name,
+      description: item.description,
+      longDescription: item.description,
+
+      image: item.image, 
+
+      itemCount: item.designs?.length ?? 0,
+
+      pattern: "textile",
+    }));
   },
 
   async getCollection(slug: string): Promise<Collection | null> {
-    try {
+     try {
       const res = await apiClient.get(`/catalog/categories/${slug}/`);
-      return res.data as Collection;
+
+      const item = res.data;
+
+      return {
+        id: String(item.id),
+        slug: item.slug,
+        name: item.name,
+        description: item.description,
+        longDescription: item.description,
+
+        image: item.image,
+
+        itemCount: item.designs?.length ?? 0,
+
+        pattern: "textile",
+      };
     } catch (err: any) {
       if (err.response?.status === 404) return null;
       throw err;

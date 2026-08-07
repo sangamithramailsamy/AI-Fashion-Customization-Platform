@@ -37,46 +37,42 @@ export const customerService = {
 
 export const addressService = {
   async list(): Promise<ShippingAddress[]> {
-    const res = await apiClient.get('/shopping/addresses/');
+    const res = await apiClient.get('/shopping/shipping-addresses/');
     return res.data as ShippingAddress[];
   },
   async create(address: Omit<ShippingAddress, 'id'>): Promise<ShippingAddress> {
-    const res = await apiClient.post('/shopping/addresses/', address);
+    const res = await apiClient.post('/shopping/shipping-addresses/', address);
     return res.data as ShippingAddress;
   },
   async update(id: string, address: Partial<ShippingAddress>): Promise<ShippingAddress> {
-    const res = await apiClient.patch(`/shopping/addresses/${id}/`, address);
+    const res = await apiClient.patch(`/shopping/shipping-addresses/${id}/`, address);
     return res.data as ShippingAddress;
   },
   async remove(id: string): Promise<void> {
-    await apiClient.delete(`/shopping/addresses/${id}/`);
+    await apiClient.delete(`/shopping/shipping-addresses/${id}/`);
   },
   async setDefault(id: string): Promise<ShippingAddress[]> {
-    const res = await apiClient.post(`/shopping/addresses/${id}/set-default/`);
+    const res = await apiClient.post(`/shopping/shipping-addresses/${id}/set-default/`);
     return res.data as ShippingAddress[];
   },
 };
 
 export const measurementService = {
   async get(): Promise<CustomerMeasurement | null> {
-    try {
-      const res = await apiClient.get('/measurements/customer/');
-      return res.data as CustomerMeasurement;
-    } catch (err: any) {
-      if (err.response?.status === 404) return null;
-      throw err;
-    }
+    return null;
   },
-  async save(data: CustomerMeasurement): Promise<CustomerMeasurement> {
-    const res = await apiClient.put('/measurements/customer/', data);
-    return res.data as CustomerMeasurement;
+
+  async save(
+    data: CustomerMeasurement
+  ): Promise<CustomerMeasurement> {
+    return data;
   },
+
   async getSleeveTypes() {
-    const res = await apiClient.get('/measurements/sleeve-types/');
-    return res.data;
+    return [];
   },
+
   async getNeckTypes() {
-    const res = await apiClient.get('/measurements/neck-types/');
-    return res.data;
+    return [];
   },
 };
