@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "core",
     "production",
     "inventory",
+    "custom_designs",
 ] 
 
 MIDDLEWARE = [
