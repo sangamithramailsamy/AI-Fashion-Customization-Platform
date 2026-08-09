@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Store, Save, X, Check, ImagePlus, Clock } from 'lucide-react';
 import { boutiqueService } from '@/services/ownerService';
@@ -11,6 +11,8 @@ export default function BoutiqueManagementPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<BoutiqueProfile | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     boutiqueService.get().then((b) => {
@@ -23,11 +25,26 @@ export default function BoutiqueManagementPage() {
     return <p className="font-body text-sm text-muted">Loading boutique…</p>;
   }
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    notify('Please select an image file', 'remove');
+    return;
+  }
+
+  setLogoFile(file);
+};
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updated = await boutiqueService.update(form);
+      const updated = await boutiqueService.update(form, logoFile);
       setBoutique(updated);
+      setForm(updated);
+      setLogoFile(null);
       setEditing(false);
       notify('Boutique details saved', 'info');
     } catch {
@@ -39,6 +56,7 @@ export default function BoutiqueManagementPage() {
 
   const cancel = () => {
     setForm(boutique);
+    setLogoFile(null);
     setEditing(false);
   };
 
@@ -75,17 +93,63 @@ export default function BoutiqueManagementPage() {
         className="grid lg:grid-cols-[1fr_2fr] gap-6 mt-8"
       >
         {/* Logo / image placeholder */}
-        <div className="bg-surface border border-token p-6">
-          <div className="aspect-square border-2 border-dashed border-token flex flex-col items-center justify-center text-muted">
-            <ImagePlus size={32} strokeWidth={1.4} />
-            <p className="font-body text-xs mt-2 text-center px-4">Logo / boutique image upload</p>
-            <p className="font-body text-[10px] mt-1 text-muted/70">Arrives with Cloudinary integration</p>
-          </div>
+        {/* Logo / image upload */}
+<div className="bg-surface border border-token p-6">
+  <input
+    ref={fileInputRef}
+    type="file"
+    accept="image/*"
+    onChange={handleLogoChange}
+    className="hidden"
+  />
+
+  <button
+    type="button"
+    onClick={() => fileInputRef.current?.click()}
+    disabled={!editing}
+    className="w-full aspect-square border-2 border-dashed border-token flex flex-col items-center justify-center text-muted hover:border-primary transition-colors disabled:cursor-default"
+  >
+    {logoFile ? (
+      <img
+        src={URL.createObjectURL(logoFile)}
+        alt="Boutique logo preview"
+        className="w-full h-full object-contain p-4"
+      />
+    ) : boutique.logo ? (
+      <img
+        src={boutique.logo}
+        alt="Boutique logo"
+        className="w-full h-full object-contain p-4"
+      />
+    ) : (
+      <>
+        <ImagePlus size={32} strokeWidth={1.4} />
+
+        <p className="font-body text-xs mt-2 text-center px-4">
+          {editing ? 'Click to upload logo' : 'Logo / boutique image'}
+        </p>
+
+        {editing && (
+          <p className="font-body text-[10px] mt-1 text-muted/70">
+            PNG, JPG or WEBP
+          </p>
+        )}
+      </>
+    )}
+  </button>
+
           <div className="mt-4 flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${boutique.active ? 'bg-green-500' : 'bg-red-400'}`} />
-            <span className="font-body text-sm text-token">{boutique.active ? 'Active' : 'Inactive'}</span>
-          </div>
-        </div>
+    <span
+      className={`h-2.5 w-2.5 rounded-full ${
+        boutique.active ? 'bg-green-500' : 'bg-red-400'
+      }`}
+    />
+
+    <span className="font-body text-sm text-token">
+      {boutique.active ? 'Active' : 'Inactive'}
+    </span>
+  </div>
+</div>
 
         {/* Details */}
         <div className="bg-surface border border-token p-6">

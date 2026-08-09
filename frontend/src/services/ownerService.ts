@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient, { ownerRequest } from './apiClient';
 import {
   getOwnerAccessToken, getOwnerRefreshToken, setOwnerTokens, clearOwnerTokens,
   getStoredOwnerUser, setStoredOwnerUser,
@@ -63,13 +63,54 @@ export const ownerAuthService = {
 };
 
 export const boutiqueService = {
-  async get(): Promise<BoutiqueProfile> {
-    const res = await apiClient.get('/owner/boutique/');
-    return res.data as BoutiqueProfile;
+  async get(): Promise<BoutiqueProfile | null> {
+    try {
+      const data = await ownerRequest<BoutiqueProfile>({
+        method: 'GET',
+        url: '/owner/boutique/',
+      });
+
+      return data;
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        return null;
+      }
+      throw err;
+    }
   },
-  async update(updates: Partial<BoutiqueProfile>): Promise<BoutiqueProfile> {
-    const res = await apiClient.patch('/owner/boutique/', updates);
-    return res.data as BoutiqueProfile;
+
+  async create(data: Partial<BoutiqueProfile>): Promise<BoutiqueProfile> {
+    return ownerRequest<BoutiqueProfile>({
+      method: 'POST',
+      url: '/owner/boutique/',
+      data,
+    });
+  },
+
+  async update(
+  updates: Partial<BoutiqueProfile>,
+  logoFile?: File | null
+): Promise<BoutiqueProfile> {
+
+  const formData = new FormData();
+
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, String(value));
+    }
+  });
+
+  if (logoFile) {
+    formData.append('logo', logoFile);
+  }
+
+    const data = await ownerRequest<BoutiqueProfile>({
+      method: 'PATCH',
+      url: '/owner/boutique/',
+      data: formData,
+      });
+
+return data;
   },
 };
 
