@@ -115,41 +115,81 @@ return data;
 };
 
 export const ownerProductService = {
+
   async list(): Promise<OwnerProduct[]> {
-    const res = await apiClient.get('/owner/products/');
-    return res.data as OwnerProduct[];
+    return ownerRequest<OwnerProduct[]>({
+      method: 'GET',
+      url: '/owner/products/',
+    });
   },
+
   async get(id: number): Promise<OwnerProduct | null> {
     try {
-      const res = await apiClient.get(`/owner/products/${id}/`);
-      return res.data as OwnerProduct;
+      return await ownerRequest<OwnerProduct>({
+        method: 'GET',
+        url: `/owner/products/${id}/`,
+      });
     } catch (err: any) {
-      if (err.response?.status === 404) return null;
+      if (err.response?.status === 404) {
+        return null;
+      }
+
       throw err;
     }
   },
-  async create(product: Omit<OwnerProduct, 'id' | 'createdAt'>): Promise<OwnerProduct> {
-    const res = await apiClient.post('/owner/products/', product);
-    return res.data as OwnerProduct;
-  },
-  async createWithImage(formData: FormData): Promise<OwnerProduct> {
-    const res = await apiClient.post('/owner/products/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+
+  async create(
+    product: Omit<OwnerProduct, 'id' | 'createdAt'>
+  ): Promise<OwnerProduct> {
+
+    return ownerRequest<OwnerProduct>({
+      method: 'POST',
+      url: '/owner/products/',
+      data: product,
     });
-    return res.data as OwnerProduct;
   },
-  async update(id: number, updates: Partial<OwnerProduct>): Promise<OwnerProduct> {
-    const res = await apiClient.patch(`/owner/products/${id}/`, updates);
-    return res.data as OwnerProduct;
-  },
-  async updateWithImage(id: number, formData: FormData): Promise<OwnerProduct> {
-    const res = await apiClient.patch(`/owner/products/${id}/`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+
+  async createWithImage(
+    formData: FormData
+  ): Promise<OwnerProduct> {
+
+    return ownerRequest<OwnerProduct>({
+      method: 'POST',
+      url: '/owner/products/',
+      data: formData,
     });
-    return res.data as OwnerProduct;
   },
+
+  async update(
+    id: number,
+    updates: Partial<OwnerProduct>
+  ): Promise<OwnerProduct> {
+
+    return ownerRequest<OwnerProduct>({
+      method: 'PATCH',
+      url: `/owner/products/${id}/`,
+      data: updates,
+    });
+  },
+
+  async updateWithImage(
+    id: number,
+    formData: FormData
+  ): Promise<OwnerProduct> {
+
+    return ownerRequest<OwnerProduct>({
+      method: 'PATCH',
+      url: `/owner/products/${id}/`,
+      data: formData,
+    });
+  },
+
   async remove(id: number): Promise<void> {
-    await apiClient.delete(`/owner/products/${id}/`);
+
+    await ownerRequest({
+      method: 'DELETE',
+      url: `/owner/products/${id}/`,
+    });
   },
 };
 

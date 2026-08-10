@@ -145,6 +145,11 @@ class Design(models.Model):
         db_index=True,
     )
 
+    is_customizable = models.BooleanField(
+        default=False,
+        db_index=True,
+    )
+
     is_active = models.BooleanField(
         default=True,
         db_index=True,
@@ -157,6 +162,8 @@ class Design(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True,
     )
+
+    
 
     class Meta:
         ordering = ["-created_at"]

@@ -100,14 +100,47 @@ export default function OwnerProductsPage() {
   };
 
   const validate = () => {
-    const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = 'Product name is required';
-    if (!form.description.trim()) e.description = 'Description is required';
-    if (form.price <= 0) e.price = 'Price must be greater than 0';
-    if (form.stock < 0) e.stock = 'Stock cannot be negative';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+  const e: Record<string, string> = {};
+
+  if (!form.name.trim()) {
+    e.name = 'Product name is required';
+  }
+
+  if (!form.description.trim()) {
+    e.description = 'Description is required';
+  }
+
+  if (form.price <= 0) {
+    e.price = 'Price must be greater than 0';
+  }
+
+  if (form.stock < 0) {
+    e.stock = 'Stock cannot be negative';
+  }
+
+  const sizes = form.sizes
+    .split(',')
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+
+  const allowedSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+  if (sizes.length === 0) {
+    e.sizes = 'At least one size is required';
+  } else {
+    const invalidSizes = sizes.filter(
+      (size) => !allowedSizes.includes(size)
+    );
+
+    if (invalidSizes.length > 0) {
+      e.sizes = `Invalid size: ${invalidSizes.join(', ')}. Use XS, S, M, L, XL or XXL.`;
+    }
+  }
+
+  setErrors(e);
+
+  return Object.keys(e).length === 0;
+};
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -123,61 +156,89 @@ export default function OwnerProductsPage() {
   };
 
   const handleSave = async () => {
-    if (!validate()) return;
-    setSaving(true);
-    try {
-      if (imageFile) {
-        const formData = new FormData();
-        formData.append('name', form.name.trim());
-        formData.append('description', form.description.trim());
-        formData.append('category', form.category);
-        formData.append('price', String(form.price));
-        formData.append('stock', String(form.stock));
-        formData.append('sizes', JSON.stringify(form.sizes.split(',').map((s) => s.trim()).filter(Boolean)));
-        formData.append('colors', JSON.stringify(form.colors.split(',').map((c) => c.trim()).filter(Boolean)));
-        formData.append('customizable', String(form.customizable));
-        formData.append('active', String(form.active));
-        formData.append('image', imageFile);
-        if (editingId !== null) {
-          const updated = await ownerProductService.updateWithImage(editingId, formData);
-          setProducts((prev) => prev.map((p) => (p.id === editingId ? updated : p)));
-          notify('Product updated', 'info');
-        } else {
-          const created = await ownerProductService.createWithImage(formData);
-          setProducts((prev) => [created, ...prev]);
-          notify('Product added', 'info');
-        }
-      } else {
-        const payload = {
-          name: form.name.trim(),
-          description: form.description.trim(),
-          category: form.category,
-          price: form.price,
-          stock: form.stock,
-          sizes: form.sizes.split(',').map((s) => s.trim()).filter(Boolean),
-          colors: form.colors.split(',').map((c) => c.trim()).filter(Boolean),
-          customizable: form.customizable,
-          active: form.active,
-          image: form.image || imagePreview || 'https://images.pexels.com/photos/2065200/pexels-photo-2065200.jpeg?auto=compress&cs=tinysrgb&w=900',
-          createdAt: new Date().toISOString(),
-        };
-        if (editingId !== null) {
-          const updated = await ownerProductService.update(editingId, payload);
-          setProducts((prev) => prev.map((p) => (p.id === editingId ? updated : p)));
-          notify('Product updated', 'info');
-        } else {
-          const created = await ownerProductService.create(payload as OwnerProduct);
-          setProducts((prev) => [created, ...prev]);
-          notify('Product added', 'info');
-        }
-      }
-      setModalOpen(false);
-    } catch {
-      notify('Unable to save product', 'remove');
-    } finally {
-      setSaving(false);
+  if (!validate()) return;
+
+  setSaving(true);
+
+  try {
+    const formData = new FormData();
+
+    formData.append('name', form.name.trim());
+    formData.append('description', form.description.trim());
+    formData.append('category', form.category);
+    formData.append('price', String(form.price));
+    formData.append('stock', String(form.stock));
+
+    formData.append(
+      'sizes',
+      JSON.stringify(
+        form.sizes
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      )
+    );
+
+    formData.append(
+      'colors',
+      JSON.stringify(
+        form.colors
+          .split(',')
+          .map((c) => c.trim())
+          .filter(Boolean)
+      )
+    );
+
+    formData.append('customizable', String(form.customizable));
+    formData.append('active', String(form.active));
+
+    const sizes = form.sizes
+  .split(',')
+  .map((s) => s.trim().toUpperCase())
+  .filter(Boolean);
+
+sizes.forEach((size) => {
+  formData.append('sizes', size);
+});
+
+    // IMPORTANT:
+    // Only send image when the user actually selected a File.
+    // Never send imagePreview or an image URL as "image".
+    if (imageFile) {
+      formData.append('image', imageFile);
     }
-  };
+
+    if (editingId !== null) {
+      const updated = await ownerProductService.updateWithImage(
+        editingId,
+        formData
+      );
+
+      setProducts((prev) =>
+        prev.map((p) => (p.id === editingId ? updated : p))
+      );
+
+      notify('Product updated', 'info');
+    } else {
+      const created = await ownerProductService.createWithImage(formData);
+
+      setProducts((prev) => [created, ...prev]);
+
+      notify('Product added', 'info');
+    }
+
+    setModalOpen(false);
+    setImageFile(null);
+    setImagePreview('');
+  } catch (error: any) {
+    console.error('PRODUCT SAVE ERROR:', error);
+    console.error('SERVER RESPONSE:', error?.response?.data);
+
+    notify('Unable to save product', 'remove');
+  } finally {
+    setSaving(false);
+  }
+};
 
   const handleDelete = async (id: number) => {
     try {
@@ -364,7 +425,12 @@ export default function OwnerProductsPage() {
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <FormFieldInput label="Stock" type="number" value={String(form.stock)} onChange={(v) => setForm((f) => ({ ...f, stock: Number(v) || 0 }))} error={errors.stock} />
-                  <FormFieldInput label="Sizes (comma separated)" value={form.sizes} onChange={(v) => setForm((f) => ({ ...f, sizes: v }))} />
+                  <FormFieldInput
+  label="Sizes (comma separated)"
+  value={form.sizes}
+  onChange={(v) => setForm((f) => ({ ...f, sizes: v }))}
+  error={errors.sizes}
+/>
                 </div>
                 <FormFieldInput label="Colors (comma separated)" value={form.colors} onChange={(v) => setForm((f) => ({ ...f, colors: v }))} />
 
