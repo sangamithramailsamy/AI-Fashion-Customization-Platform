@@ -65,18 +65,24 @@ export const ownerAuthService = {
 export const boutiqueService = {
   async get(): Promise<BoutiqueProfile | null> {
     try {
-      const data = await ownerRequest<BoutiqueProfile>({
+      return await ownerRequest<BoutiqueProfile>({
         method: 'GET',
         url: '/owner/boutique/',
       });
-
-      return data;
     } catch (err: any) {
       if (err.response?.status === 404) {
         return null;
       }
       throw err;
     }
+  },
+
+  async update(updates: Partial<BoutiqueProfile>): Promise<BoutiqueProfile> {
+    return ownerRequest<BoutiqueProfile>({
+      method: 'PATCH',
+      url: '/owner/boutique/',
+      data: updates,
+    });
   },
 
   async create(data: Partial<BoutiqueProfile>): Promise<BoutiqueProfile> {
@@ -86,40 +92,13 @@ export const boutiqueService = {
       data,
     });
   },
-
-  async update(
-  updates: Partial<BoutiqueProfile>,
-  logoFile?: File | null
-): Promise<BoutiqueProfile> {
-
-  const formData = new FormData();
-
-  Object.entries(updates).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      formData.append(key, String(value));
-    }
-  });
-
-  if (logoFile) {
-    formData.append('logo', logoFile);
-  }
-
-    const data = await ownerRequest<BoutiqueProfile>({
-      method: 'PATCH',
-      url: '/owner/boutique/',
-      data: formData,
-      });
-
-return data;
-  },
 };
 
 export const ownerProductService = {
-
   async list(): Promise<OwnerProduct[]> {
     return ownerRequest<OwnerProduct[]>({
       method: 'GET',
-      url: '/owner/products/',
+      url: '/owner/products/products/',
     });
   },
 
@@ -127,7 +106,7 @@ export const ownerProductService = {
     try {
       return await ownerRequest<OwnerProduct>({
         method: 'GET',
-        url: `/owner/products/${id}/`,
+        url: `/owner/products/products/${id}/`,
       });
     } catch (err: any) {
       if (err.response?.status === 404) {
@@ -141,10 +120,9 @@ export const ownerProductService = {
   async create(
     product: Omit<OwnerProduct, 'id' | 'createdAt'>
   ): Promise<OwnerProduct> {
-
     return ownerRequest<OwnerProduct>({
       method: 'POST',
-      url: '/owner/products/',
+      url: '/owner/products/products/',
       data: product,
     });
   },
@@ -152,10 +130,9 @@ export const ownerProductService = {
   async createWithImage(
     formData: FormData
   ): Promise<OwnerProduct> {
-
     return ownerRequest<OwnerProduct>({
       method: 'POST',
-      url: '/owner/products/',
+      url: '/owner/products/products/',
       data: formData,
     });
   },
@@ -164,10 +141,9 @@ export const ownerProductService = {
     id: number,
     updates: Partial<OwnerProduct>
   ): Promise<OwnerProduct> {
-
     return ownerRequest<OwnerProduct>({
       method: 'PATCH',
-      url: `/owner/products/${id}/`,
+      url: `/owner/products/products/${id}/`,
       data: updates,
     });
   },
@@ -176,19 +152,17 @@ export const ownerProductService = {
     id: number,
     formData: FormData
   ): Promise<OwnerProduct> {
-
     return ownerRequest<OwnerProduct>({
       method: 'PATCH',
-      url: `/owner/products/${id}/`,
+      url: `/owner/products/products/${id}/`,
       data: formData,
     });
   },
 
   async remove(id: number): Promise<void> {
-
     await ownerRequest({
       method: 'DELETE',
-      url: `/owner/products/${id}/`,
+      url: `/owner/products/products/${id}/`,
     });
   },
 };

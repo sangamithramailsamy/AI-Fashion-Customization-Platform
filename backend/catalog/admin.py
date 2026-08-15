@@ -69,7 +69,7 @@ class CollectionCategoryAdmin(admin.ModelAdmin):
 class DesignAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "category",
+        "section",
         "base_price",
         "is_featured",
         "is_new_arrival",
@@ -77,7 +77,7 @@ class DesignAdmin(admin.ModelAdmin):
     )
 
     list_filter = (
-        "category",
+        "section",
         "is_active",
         "is_featured",
         "is_new_arrival",
@@ -85,6 +85,7 @@ class DesignAdmin(admin.ModelAdmin):
 
     search_fields = (
         "name",
+        "section__name",
     )
 
     prepopulated_fields = {

@@ -8,59 +8,66 @@ import type { Product, Collection } from '@/types';
 
 export const catalogService = {
   async listProducts(): Promise<Product[]> {
-    const res = await apiClient.get("/catalog/designs/");
+  const res = await apiClient.get("/catalog/designs/");
 
-    return res.data.map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
+  return res.data.map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description,
 
-      price: Number(item.price),
-      originalPrice: Number(item.price),
+    price: Number(item.price),
+    originalPrice: Number(item.price),
 
-      image: item.image,
+    image: item.image || item.thumbnail,
 
-      category: "Boutique Creation",
+    category: item.category ?? "Boutique Creation",
 
-      collection: item.category?.slug ?? "",
-      
-      stock:
-        item.variants?.reduce(
-        (sum: number, v: any) => sum + v.stock,
+    collection:
+      item.collection ??
+      item.collection_slug ??
+      item.category?.section?.slug ??
+      "",
+
+    stock:
+      item.variants?.reduce(
+        (sum: number, v: any) => sum + Number(v.stock || 0),
         0
       ) ?? 0,
 
-      rating: 5,
+    rating: 5,
+    reviewCount: 0,
 
-      reviewCount: 0,
+    // Django → Frontend mapping
+    featured: item.is_featured ?? item.featured ?? false,
 
-      featured: item.featured,
+    newArrival: item.is_new_arrival ?? item.newArrival ?? false,
 
-      newArrival: item.newArrival,
+    customizable: item.is_customizable ?? true,
 
-      customizable: true,
+    badge:
+      item.is_new_arrival ?? item.newArrival
+        ? "New"
+        : undefined,
 
-      badge: item.newArrival ? "New" : undefined,
-
-      colors:
-        item.variants?.map((v: any) => ({
+    colors:
+      item.variants?.map((v: any) => ({
         name: v.color,
         hex: "#000000",
       })) ?? [],
 
-      sizes:
-        item.variants?.map((v: any) => ({
+    sizes:
+      item.variants?.map((v: any) => ({
         label: v.size,
-        inStock: v.stock > 0,
+        inStock: Number(v.stock || 0) > 0,
       })) ?? [],
 
-    images: [],
+    images: item.images ?? [],
 
     popularity: 0,
 
     createdAt: item.created_at,
-    }));
-  },
+  }));
+},
 
   async getFeatured(): Promise<Product[]> {
     const res = await apiClient.get('/catalog/designs/featured/');
@@ -68,9 +75,70 @@ export const catalogService = {
   },
 
   async getNewArrivals(): Promise<Product[]> {
-    const res = await apiClient.get('/catalog/designs/new-arrivals/');
-    return res.data as Product[];
-  },
+  const res = await apiClient.get('/catalog/designs/new-arrivals/');
+
+  return res.data.map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description,
+
+    price: Number(item.price),
+    originalPrice: Number(item.base_price ?? item.price),
+
+    image: item.image || item.thumbnail,
+
+    category: "Boutique Creation",
+
+    collection:
+      item.category_slug ??
+      item.category?.slug ??
+      "",
+
+    stock:
+      item.variants?.reduce(
+        (sum: number, v: any) => sum + Number(v.stock || 0),
+        0
+      ) ?? 0,
+
+    rating: 5,
+    reviewCount: 0,
+
+    featured:
+      item.featured ??
+      item.is_featured ??
+      false,
+
+    newArrival:
+      item.newArrival ??
+      item.is_new_arrival ??
+      false,
+
+    customizable: true,
+
+    badge:
+      (item.newArrival ?? item.is_new_arrival)
+        ? "New"
+        : undefined,
+
+    colors:
+      item.variants?.map((v: any) => ({
+        name: v.color,
+        hex: "#000000",
+      })) ?? [],
+
+    sizes:
+      item.variants?.map((v: any) => ({
+        label: v.size,
+        inStock: Number(v.stock || 0) > 0,
+      })) ?? [],
+
+    images: item.images ?? [],
+
+    popularity: 0,
+
+    createdAt: item.created_at,
+  }));
+},
 
   async getProduct(id: number): Promise<Product | null> {
     try {
@@ -83,26 +151,26 @@ export const catalogService = {
   },
 
   async listCollections(): Promise<Collection[]> {
-    const res = await apiClient.get("/catalog/categories/");
+  const res = await apiClient.get("/catalog/sections/");
 
-    return res.data.map((item: any) => ({
-      id: String(item.id),
-      slug: item.slug,
-      name: item.name,
-      description: item.description,
-      longDescription: item.description,
+  return res.data.map((item: any) => ({
+    id: String(item.id),
+    slug: item.slug,
+    name: item.name,
+    description: item.description,
+    longDescription: item.description,
 
-      image: item.image, 
+    image: item.image || item.cover_image,
 
-      itemCount: item.designs?.length ?? 0,
+    itemCount: item.item_count ?? 0,
 
-      pattern: "textile",
-    }));
-  },
+    pattern: "textile",
+  }));
+},
 
   async getCollection(slug: string): Promise<Collection | null> {
      try {
-      const res = await apiClient.get(`/catalog/categories/${slug}/`);
+      const res = await apiClient.get('/catalog/sections/');
 
       const item = res.data;
 
@@ -115,7 +183,7 @@ export const catalogService = {
 
         image: item.image,
 
-        itemCount: item.designs?.length ?? 0,
+        itemCount: item.design_count ?? 0,
 
         pattern: "textile",
       };
@@ -126,9 +194,65 @@ export const catalogService = {
   },
 
   async getProductsByCollection(slug: string): Promise<Product[]> {
-    const res = await apiClient.get(`/catalog/categories/${slug}/designs/`);
-    return res.data as Product[];
-  },
+  const res = await apiClient.get(
+    `/catalog/designs/?collection=${encodeURIComponent(slug)}`
+  );
+
+  return res.data.map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description,
+
+    price: Number(item.price),
+    originalPrice: Number(item.base_price ?? item.price),
+
+    image: item.image || item.thumbnail,
+
+    category: item.category ?? "Boutique Creation",
+
+    collection: item.collection ?? slug,
+
+    stock:
+      item.variants?.reduce(
+        (sum: number, v: any) => sum + Number(v.stock || 0),
+        0
+      ) ?? 0,
+
+    rating: 5,
+    reviewCount: 0,
+
+    featured: item.featured ?? item.is_featured ?? false,
+
+    newArrival:
+      item.newArrival ?? item.is_new_arrival ?? false,
+
+    customizable:
+      item.customizable ?? item.is_customizable ?? true,
+
+    badge:
+      (item.newArrival ?? item.is_new_arrival)
+        ? "New"
+        : undefined,
+
+    colors:
+      item.variants?.map((v: any) => ({
+        name: v.color,
+        hex: "#000000",
+      })) ?? [],
+
+    sizes:
+      item.variants?.map((v: any) => ({
+        label: v.size,
+        inStock: Number(v.stock || 0) > 0,
+      })) ?? [],
+
+    images: item.images ?? [],
+
+    popularity: 0,
+
+    createdAt: item.created_at,
+  }));
+},
 
   async getBoutiqueCreations(): Promise<Product[]> {
     const res = await apiClient.get('/catalog/designs/boutique-creations/');

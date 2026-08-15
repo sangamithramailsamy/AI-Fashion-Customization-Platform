@@ -56,9 +56,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   );
 
   const getProductsByCollection = useCallback(
-    (slug: string) => products.filter((p) => p.collection === slug),
-    [products]
-  );
+  (slug: string) => products.filter((p) => p.collection === slug),
+  [products]
+);
 
   const getFeatured = useCallback(() => products.filter((p) => p.featured), [products]);
   const getNewArrivals = useCallback(() => products.filter((p) => p.newArrival), [products]);

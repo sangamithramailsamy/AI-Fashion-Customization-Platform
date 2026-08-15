@@ -102,12 +102,12 @@ class CollectionCategory(models.Model):
 
 
 class Design(models.Model):
-    category = models.ForeignKey(
-        CollectionCategory,
+    section = models.ForeignKey(
+        Section,
         on_delete=models.CASCADE,
         related_name="designs",
     )
-
+    
     name = models.CharField(
         max_length=200,
         db_index=True,

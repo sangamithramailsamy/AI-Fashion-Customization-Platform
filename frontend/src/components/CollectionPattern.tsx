@@ -17,28 +17,40 @@ export default function CollectionPattern({ pattern }: Props) {
 
   switch (pattern) {
     case 'kolam':
-      return (
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" fill="none" preserveAspectRatio="xMidYMid slice">
-          <motion.g
-            stroke={brown}
-            strokeWidth="1"
-            opacity="0.55"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 0.55 }}
-            transition={{ duration: 6, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-          >
-            <path d="M100 20 L100 60 L140 60 L140 100 L100 100 L100 140 L60 140 L60 100 L100 100 L100 60 L60 60 L60 100 L20 100" />
-            <path d="M100 20 L140 60 L180 60 L140 100 L180 100 L140 140 L100 180 L60 140 L20 100 L60 60 L20 60 L60 20 L100 60" />
-            <circle cx="100" cy="100" r="8" stroke={bronze} strokeWidth="1.2" fill="none" />
-          </motion.g>
-          <motion.circle
-            cx="100" cy="100" r="40"
-            stroke={olive} strokeWidth="0.8" fill="none" opacity="0.4"
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        </svg>
-      );
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[#fbf8e8]">
+
+      {/* Static dotted background */}
+      <div
+        className="absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle, rgba(126,128,65,0.35) 1px, transparent 1px)',
+          backgroundSize: '36px 36px',
+          backgroundPosition: '55% center',
+        }}
+      />
+
+      {/* ONLY animated kolam lines */}
+      <img
+        src="/images/kolam-lines.svg"
+        alt=""
+        className="
+          absolute
+          right-[4%]
+          top-1/2
+          w-[42%]
+          h-[88%]
+          object-contain
+        "
+        style={{
+          transform: 'translateY(-50%) scaleX(-1)',
+          transformOrigin: 'center',
+        }}
+      />
+
+    </div>
+  );
 
     case 'slant':
       return (

@@ -2,7 +2,6 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useCatalog } from '@/context/CatalogContext';
-import CollectionPattern from '@/components/CollectionPattern';
 import ProductCard from '@/components/ProductCard';
 
 export default function CollectionDetailPage() {
@@ -26,10 +25,16 @@ export default function CollectionDetailPage() {
   return (
     <div className="pt-24 md:pt-28 pb-20">
       {/* Banner preserving the collection's visual identity */}
-      <div className="relative overflow-hidden border-b border-token bg-surface">
-        <div className="absolute inset-0 opacity-70">
-          <CollectionPattern pattern={collection.pattern} />
-        </div>
+      <div className="relative overflow-hidden border-b border-token bg-[#fbe9dc]">
+      <div className="absolute right-0 top-0 h-full w-1/2 flex items-center justify-center overflow-hidden">
+        {collection.image && (
+          <img
+          src={collection.image}
+          alt={collection.name}
+          className="w-full h-full object-contain object-right"
+          />
+        )}
+      </div>
         <div className="relative max-w-7xl mx-auto px-4 md:px-8 py-16 md:py-24">
           <motion.p
             initial={{ opacity: 0, y: 10 }}

@@ -4,7 +4,7 @@ import json
 from django.db import transaction
 from rest_framework import serializers
 
-from .models import Design, DesignVariant, CollectionCategory
+from .models import Design, DesignVariant, Section
 
 
 class OwnerProductSerializer(serializers.ModelSerializer):
@@ -14,7 +14,7 @@ class OwnerProductSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "description",
-            "category",
+            "section",
             "price",
             "stock",
             "sizes",
@@ -24,7 +24,7 @@ class OwnerProductSerializer(serializers.ModelSerializer):
             "image",
         ]
 
-    category = serializers.CharField(write_only=True)
+    section = serializers.CharField(write_only=True)
 
     price = serializers.DecimalField(
         max_digits=10,
@@ -177,56 +177,48 @@ class OwnerProductSerializer(serializers.ModelSerializer):
 
         return super().to_internal_value(data)
 
-    # ---------------------------------------------------------
-    # CATEGORY
-    # ---------------------------------------------------------
-    def _get_category(self, value):
+    def _get_section(self, value):
         value = str(value).strip()
 
         if not value:
             raise serializers.ValidationError(
-                {
-                    "category": "Category is required."
-                }
+                {"section": "Section is required."}
             )
 
-        # Category ID
+        # Section ID
         if value.isdigit():
             try:
-                return CollectionCategory.objects.get(
-                    id=int(value)
-                )
-            except CollectionCategory.DoesNotExist:
+                return Section.objects.get(id=int(value))
+            except Section.DoesNotExist:
                 raise serializers.ValidationError(
                     {
-                        "category": (
-                            f"Category with ID '{value}' "
-                            "not found."
-                        )
+                        "section":
+                        f"Section with ID '{value}' not found."
                     }
                 )
 
-        # Category name
-        category = CollectionCategory.objects.filter(
-            name__iexact=value
+        # Section name
+        section = Section.objects.filter(
+            name__iexact=value,
+            is_active=True,
         ).first()
 
-        if category:
-            return category
+        if section:
+            return section
 
-        # Category slug
-        category = CollectionCategory.objects.filter(
-            slug__iexact=value
+        # Section slug
+        section = Section.objects.filter(
+            slug__iexact=value,
+            is_active=True,
         ).first()
 
-        if category:
-            return category
+        if section:
+            return section
 
         raise serializers.ValidationError(
             {
-                "category": (
-                    f"Category '{value}' not found."
-                )
+                "section":
+                f"Section '{value}' not found."
             }
         )
 
@@ -408,7 +400,10 @@ class OwnerProductSerializer(serializers.ModelSerializer):
             "id": instance.id,
             "name": instance.name,
             "description": instance.description,
-            "category": instance.category.name,
+            "section": (
+                instance.section.name
+                if instance.section else ""
+            ),
             "price": float(price),
             "stock": stock,
             "sizes": sizes,
@@ -424,8 +419,8 @@ class OwnerProductSerializer(serializers.ModelSerializer):
     # ---------------------------------------------------------
     @transaction.atomic
     def create(self, validated_data):
-        category_value = validated_data.pop(
-            "category"
+        section_value = validated_data.pop(
+            "section"
         )
 
         price = validated_data.pop("price")
@@ -451,12 +446,12 @@ class OwnerProductSerializer(serializers.ModelSerializer):
             None,
         )
 
-        category = self._get_category(
-            category_value
+        section = self._get_section(
+            section_value
         )
 
         design = Design.objects.create(
-            category=category,
+            section=section,
             name=validated_data.get(
                 "name",
                 "",
@@ -487,8 +482,8 @@ class OwnerProductSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
 
-        category_value = validated_data.pop(
-            "category",
+        section_value = validated_data.pop(
+            "section",
             None,
         )
 
@@ -517,10 +512,12 @@ class OwnerProductSerializer(serializers.ModelSerializer):
             None,
         )
 
-        if category_value is not None:
-            instance.category = self._get_category(
-                category_value
-            )
+        if section_value is not None:
+            section = self._get_section(
+            section_value
+        )
+
+        instance.section = section
 
         if "is_customizable" in validated_data:
             instance.is_customizable = (
