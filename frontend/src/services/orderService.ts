@@ -10,7 +10,7 @@ export const orderService = {
 
   async get(id: string): Promise<Order | null> {
     try {
-      const res = await apiClient.get(`/orders/${id}/`);
+      const res = await apiClient.get(`/orders/orders/${id}/`);
       return res.data as Order;
     } catch (err: any) {
       if (err.response?.status === 404) return null;
@@ -19,7 +19,27 @@ export const orderService = {
   },
 
   async create(order: Partial<Order>): Promise<Order> {
-    const res = await apiClient.post('/orders/', order);
+    const payload = {
+      boutique: order.boutique,
+
+      order_date: order.orderDate?.split('T')[0],
+      delivery_date: order.deliveryDate?.split('T')[0],
+
+      advance_paid: order.advancePaid ?? 0,
+      status: order.status ?? 'PENDING',
+      notes: order.notes ?? '',
+
+      items: (order.items ?? []).map((item) => ({
+        item_type: 'OTHERS',
+
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        notes: '',
+      })),
+    };
+
+    const res = await apiClient.post('/orders/orders/', payload);
+
     return res.data as Order;
   },
 

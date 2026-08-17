@@ -2,260 +2,299 @@ import apiClient from './apiClient';
 import type { Product, Collection } from '@/types';
 
 /**
- * Catalog service — fetches products, collections, and sections from the
- * Django REST backend. Replaces the static mockData module.
+ * Convert Django Design response → Frontend Product
+ *
+ * Current backend structure:
+ * section       = Traditional / Ethnic / Western / etc.
+ * section_slug  = traditional / ethnic / western / etc.
  */
+function mapProduct(item: any): Product {
+  const variants = Array.isArray(item.variants)
+    ? item.variants
+    : [];
 
-export const catalogService = {
-  async listProducts(): Promise<Product[]> {
-  const res = await apiClient.get("/catalog/designs/");
+  const stock = variants.reduce(
+    (sum: number, variant: any) =>
+      sum + Number(variant.stock || 0),
+    0
+  );
 
-  return res.data.map((item: any) => ({
+  const newArrival =
+    item.newArrival ??
+    item.is_new_arrival ??
+    false;
+
+  const featured =
+    item.featured ??
+    item.is_featured ??
+    false;
+
+  const active =
+    item.active ??
+    item.is_active ??
+    false;
+
+  const customizable =
+    item.customizable ??
+    item.is_customizable ??
+    false;
+
+  return {
     id: item.id,
     name: item.name,
-    description: item.description,
+    description: item.description ?? '',
 
-    price: Number(item.price),
-    originalPrice: Number(item.price),
+    price: Number(item.price ?? item.base_price ?? 0),
+    originalPrice: Number(
+      item.base_price ?? item.price ?? 0
+    ),
 
-    image: item.image || item.thumbnail,
+    image: item.image || item.thumbnail || '',
 
-    category: item.category ?? "Boutique Creation",
+    /*
+     * New backend no longer returns category.
+     * The product belongs directly to a Section.
+     *
+     * For the frontend, section name is used as the
+     * display category/filter value.
+     */
+    category:
+      item.section ??
+      item.category ??
+      'Boutique Creation',
 
+    /*
+     * Section slug is the collection slug.
+     */
     collection:
+      item.section_slug ??
       item.collection ??
       item.collection_slug ??
-      item.category?.section?.slug ??
-      "",
+      '',
 
-    stock:
-      item.variants?.reduce(
-        (sum: number, v: any) => sum + Number(v.stock || 0),
-        0
-      ) ?? 0,
+    stock,
 
     rating: 5,
     reviewCount: 0,
 
-    // Django → Frontend mapping
-    featured: item.is_featured ?? item.featured ?? false,
+    featured,
+    newArrival,
+    customizable,
+    active,
 
-    newArrival: item.is_new_arrival ?? item.newArrival ?? false,
+    badge: newArrival ? 'New' : undefined,
 
-    customizable: item.is_customizable ?? true,
-
-    badge:
-      item.is_new_arrival ?? item.newArrival
-        ? "New"
-        : undefined,
-
-    colors:
-      item.variants?.map((v: any) => ({
+    colors: variants
+      .filter((v: any) => v.color)
+      .map((v: any) => ({
         name: v.color,
-        hex: "#000000",
-      })) ?? [],
+        hex: '#000000',
+      })),
 
-    sizes:
-      item.variants?.map((v: any) => ({
-        label: v.size,
-        inStock: Number(v.stock || 0) > 0,
-      })) ?? [],
+    sizes: variants.map((v: any) => ({
+      label: v.size,
+      inStock: Number(v.stock || 0) > 0,
+    })),
 
     images: item.images ?? [],
 
     popularity: 0,
 
-    createdAt: item.created_at,
-  }));
-},
+    createdAt:
+      item.created_at ??
+      item.createdAt,
+  };
+}
 
-  async getFeatured(): Promise<Product[]> {
-    const res = await apiClient.get('/catalog/designs/featured/');
-    return res.data as Product[];
+export const catalogService = {
+  // --------------------------------------------------
+  // ALL PRODUCTS — SHOP
+  // --------------------------------------------------
+
+  async listProducts(): Promise<Product[]> {
+    const res = await apiClient.get('/catalog/designs/');
+
+    const data = Array.isArray(res.data)
+      ? res.data
+      : res.data.results ?? [];
+
+    return data.map(mapProduct);
   },
 
+  // --------------------------------------------------
+  // FEATURED PRODUCTS
+  // --------------------------------------------------
+
+  async getFeatured(): Promise<Product[]> {
+    const res = await apiClient.get(
+      '/catalog/designs/featured/'
+    );
+
+    const data = Array.isArray(res.data)
+      ? res.data
+      : res.data.results ?? [];
+
+    return data.map(mapProduct);
+  },
+
+  // --------------------------------------------------
+  // NEW ARRIVALS
+  // --------------------------------------------------
+
   async getNewArrivals(): Promise<Product[]> {
-  const res = await apiClient.get('/catalog/designs/new-arrivals/');
+    const res = await apiClient.get(
+      '/catalog/designs/new-arrivals/'
+    );
 
-  return res.data.map((item: any) => ({
-    id: item.id,
-    name: item.name,
-    description: item.description,
+    const data = Array.isArray(res.data)
+      ? res.data
+      : res.data.results ?? [];
 
-    price: Number(item.price),
-    originalPrice: Number(item.base_price ?? item.price),
+    return data.map(mapProduct);
+  },
 
-    image: item.image || item.thumbnail,
+  // --------------------------------------------------
+  // SINGLE PRODUCT
+  // --------------------------------------------------
 
-    category: "Boutique Creation",
-
-    collection:
-      item.category_slug ??
-      item.category?.slug ??
-      "",
-
-    stock:
-      item.variants?.reduce(
-        (sum: number, v: any) => sum + Number(v.stock || 0),
-        0
-      ) ?? 0,
-
-    rating: 5,
-    reviewCount: 0,
-
-    featured:
-      item.featured ??
-      item.is_featured ??
-      false,
-
-    newArrival:
-      item.newArrival ??
-      item.is_new_arrival ??
-      false,
-
-    customizable: true,
-
-    badge:
-      (item.newArrival ?? item.is_new_arrival)
-        ? "New"
-        : undefined,
-
-    colors:
-      item.variants?.map((v: any) => ({
-        name: v.color,
-        hex: "#000000",
-      })) ?? [],
-
-    sizes:
-      item.variants?.map((v: any) => ({
-        label: v.size,
-        inStock: Number(v.stock || 0) > 0,
-      })) ?? [],
-
-    images: item.images ?? [],
-
-    popularity: 0,
-
-    createdAt: item.created_at,
-  }));
-},
-
-  async getProduct(id: number): Promise<Product | null> {
+  async getProduct(
+    id: number
+  ): Promise<Product | null> {
     try {
-      const res = await apiClient.get(`/catalog/designs/${id}/`);
-      return res.data as Product;
+      const res = await apiClient.get(
+        `/catalog/designs/${id}/`
+      );
+
+      return mapProduct(res.data);
     } catch (err: any) {
-      if (err.response?.status === 404) return null;
+      if (err.response?.status === 404) {
+        return null;
+      }
+
       throw err;
     }
   },
 
+  // --------------------------------------------------
+  // COLLECTIONS / SECTIONS
+  // --------------------------------------------------
+
   async listCollections(): Promise<Collection[]> {
-  const res = await apiClient.get("/catalog/sections/");
+    const res = await apiClient.get(
+      '/catalog/sections/'
+    );
 
-  return res.data.map((item: any) => ({
-    id: String(item.id),
-    slug: item.slug,
-    name: item.name,
-    description: item.description,
-    longDescription: item.description,
+    const data = Array.isArray(res.data)
+      ? res.data
+      : res.data.results ?? [];
 
-    image: item.image || item.cover_image,
+    return data.map((item: any) => ({
+      id: String(item.id),
+      slug: item.slug,
+      name: item.name,
+      description: item.description ?? '',
+      longDescription: item.description ?? '',
 
-    itemCount: item.item_count ?? 0,
+      image:
+        item.image ||
+        item.cover_image ||
+        '',
 
-    pattern: "textile",
-  }));
-},
+      itemCount:
+        item.item_count ??
+        0,
 
-  async getCollection(slug: string): Promise<Collection | null> {
-     try {
-      const res = await apiClient.get('/catalog/sections/');
+      pattern: 'textile',
+    }));
+  },
 
-      const item = res.data;
+  // --------------------------------------------------
+  // SINGLE COLLECTION
+  // --------------------------------------------------
+
+  async getCollection(
+    slug: string
+  ): Promise<Collection | null> {
+    try {
+      const res = await apiClient.get(
+        '/catalog/sections/'
+      );
+
+      const data = Array.isArray(res.data)
+        ? res.data
+        : res.data.results ?? [];
+
+      const item = data.find(
+        (section: any) =>
+          section.slug === slug
+      );
+
+      if (!item) {
+        return null;
+      }
 
       return {
         id: String(item.id),
         slug: item.slug,
         name: item.name,
-        description: item.description,
-        longDescription: item.description,
+        description:
+          item.description ?? '',
+        longDescription:
+          item.description ?? '',
 
-        image: item.image,
+        image:
+          item.image ||
+          item.cover_image ||
+          '',
 
-        itemCount: item.design_count ?? 0,
+        itemCount:
+          item.item_count ??
+          0,
 
-        pattern: "textile",
+        pattern: 'textile',
       };
     } catch (err: any) {
-      if (err.response?.status === 404) return null;
+      if (err.response?.status === 404) {
+        return null;
+      }
+
       throw err;
     }
   },
 
-  async getProductsByCollection(slug: string): Promise<Product[]> {
-  const res = await apiClient.get(
-    `/catalog/designs/?collection=${encodeURIComponent(slug)}`
-  );
+  // --------------------------------------------------
+  // PRODUCTS BY COLLECTION
+  // --------------------------------------------------
 
-  return res.data.map((item: any) => ({
-    id: item.id,
-    name: item.name,
-    description: item.description,
+  async getProductsByCollection(
+    slug: string
+  ): Promise<Product[]> {
+    const res = await apiClient.get(
+      `/catalog/designs/?collection=${encodeURIComponent(
+        slug
+      )}`
+    );
 
-    price: Number(item.price),
-    originalPrice: Number(item.base_price ?? item.price),
+    const data = Array.isArray(res.data)
+      ? res.data
+      : res.data.results ?? [];
 
-    image: item.image || item.thumbnail,
+    return data.map(mapProduct);
+  },
 
-    category: item.category ?? "Boutique Creation",
-
-    collection: item.collection ?? slug,
-
-    stock:
-      item.variants?.reduce(
-        (sum: number, v: any) => sum + Number(v.stock || 0),
-        0
-      ) ?? 0,
-
-    rating: 5,
-    reviewCount: 0,
-
-    featured: item.featured ?? item.is_featured ?? false,
-
-    newArrival:
-      item.newArrival ?? item.is_new_arrival ?? false,
-
-    customizable:
-      item.customizable ?? item.is_customizable ?? true,
-
-    badge:
-      (item.newArrival ?? item.is_new_arrival)
-        ? "New"
-        : undefined,
-
-    colors:
-      item.variants?.map((v: any) => ({
-        name: v.color,
-        hex: "#000000",
-      })) ?? [],
-
-    sizes:
-      item.variants?.map((v: any) => ({
-        label: v.size,
-        inStock: Number(v.stock || 0) > 0,
-      })) ?? [],
-
-    images: item.images ?? [],
-
-    popularity: 0,
-
-    createdAt: item.created_at,
-  }));
-},
+  // --------------------------------------------------
+  // BOUTIQUE CREATIONS
+  // --------------------------------------------------
 
   async getBoutiqueCreations(): Promise<Product[]> {
-    const res = await apiClient.get('/catalog/designs/boutique-creations/');
-    return res.data as Product[];
+    const res = await apiClient.get(
+      '/catalog/designs/boutique-creations/'
+    );
+
+    const data = Array.isArray(res.data)
+      ? res.data
+      : res.data.results ?? [];
+
+    return data.map(mapProduct);
   },
 };

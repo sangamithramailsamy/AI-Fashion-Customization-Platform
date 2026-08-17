@@ -6,22 +6,41 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = "__all__"
+        extra_kwargs = {
+            "order": {"required": False}
+        }
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
+    items = OrderItemSerializer(many=True)
 
     class Meta:
         model = Order
+
         fields = "__all__"
+
         read_only_fields = (
             "owner",
+            "customer",
             "order_number",
             "total_amount",
             "balance_amount",
             "created_at",
             "updated_at",
         )
+
+    def create(self, validated_data):
+        items_data = validated_data.pop("items", [])
+
+        order = Order.objects.create(**validated_data)
+
+        for item_data in items_data:
+            OrderItem.objects.create(
+                order=order,
+                **item_data
+            )
+
+        return order
 
     def validate(self, attrs):
         instance = getattr(self, "instance", None)
@@ -50,20 +69,19 @@ class OrderSerializer(serializers.ModelSerializer):
             instance.status if instance else "PENDING"
         )
 
-        # Delivery date validation
         if order_date and delivery_date:
             if delivery_date < order_date:
                 raise serializers.ValidationError({
-                    "delivery_date": "Delivery date cannot be before the order date."
+                    "delivery_date":
+                        "Delivery date cannot be before the order date."
                 })
 
-        # Advance payment validation
         if instance and advance_paid > total_amount:
             raise serializers.ValidationError({
-                "advance_paid": "Advance payment cannot exceed the total amount."
+                "advance_paid":
+                    "Advance payment cannot exceed the total amount."
             })
 
-        # Status workflow validation
         if instance:
             allowed = {
                 "PENDING": ["IN_PROGRESS", "CANCELLED"],

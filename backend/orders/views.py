@@ -67,7 +67,41 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Order.objects.none()
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        user = self.request.user
+
+        # Customer profile of the logged-in customer
+        try:
+            customer = user.customer_profile
+        except Exception:
+            raise ValidationError(
+                {"customer": "Customer profile not found for this user."}
+            )   
+
+        # Boutique must be provided by the frontend
+        boutique_id = self.request.data.get("boutique")
+
+        if not boutique_id:
+            raise ValidationError(
+                {"boutique": "Boutique is required."}
+            )
+
+        try:
+            from boutiques.models import Boutique
+
+            boutique = Boutique.objects.get(
+                id=boutique_id,
+                status="ACTIVE",
+            )
+        except Boutique.DoesNotExist:
+            raise ValidationError(
+                {"boutique": "Selected boutique does not exist or is inactive."}
+            )
+
+        serializer.save(
+            owner=boutique.owner,
+            customer=customer,
+            boutique=boutique,
+        )
 
     def perform_update(self, serializer):
         user = self.request.user

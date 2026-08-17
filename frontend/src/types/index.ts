@@ -45,6 +45,7 @@ export interface Product {
   featured?: boolean;
   newArrival?: boolean;
   customizable?: boolean;
+  active?: boolean;
   badge?: ProductBadge;
   createdAt: string;
   popularity: number;
@@ -263,15 +264,10 @@ export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'FAILED';
 export type PaymentMethod = 'upi' | 'card' | 'cod';
 
 export interface OrderItem {
-  productId: number;
-  productName: string;
-  productImage: string;
-  size: string;
-  color: string;
+  itemType: string;
   quantity: number;
   unitPrice: number;
-  customizable: boolean;
-  hasMeasurements?: boolean;
+  notes?: string;
 }
 
 export interface Order {
@@ -279,6 +275,7 @@ export interface Order {
   orderNumber: string;
   orderDate: string;
   deliveryDate?: string;
+  boutique: number;
   items: OrderItem[];
   totalAmount: number;
   advancePaid: number;

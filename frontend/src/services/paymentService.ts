@@ -29,7 +29,12 @@ export const PAYMENT_OPTIONS: PaymentOption[] = [
 
 export const paymentService = {
   async processPayment(request: PaymentRequest): Promise<PaymentResult> {
-    const res = await apiClient.post('/payments/create-razorpay-order/', request);
+    const res = await apiClient.post('/payments/create-razorpay-order/', {
+      order_id: Number(request.orderId),
+      amount: request.amount,
+      payment_type: request.isAdvance ? 'ADVANCE' : 'FULL',
+    });
+
     return res.data as PaymentResult;
   },
 

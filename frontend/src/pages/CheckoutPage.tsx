@@ -505,55 +505,95 @@ export default function CheckoutPage() {
                         if (!paymentMethod) { notify('Please select a payment method', 'info'); return; }
                         setProcessing(true);
                         try {
-                          const amountToPay = paymentMode === 'advance' ? Math.round(total / 2) : total;
-                          // Demo payment
+                          const amountToPay =
+                            paymentMode === 'advance'
+                              ? Math.round(total / 2)
+                              : total;
+
+                          const orderItems: OrderItem[] = lines.map(({ item, product }) => {
+  if (!product) {
+    throw new Error('Missing product');
+  }
+
+  return {
+    itemType: 'OTHERS',
+    quantity: item.quantity,
+    unitPrice: product.price,
+    notes: [
+      `Product: ${product.name}`,
+      item.size ? `Size: ${item.size}` : '',
+      item.color ? `Color: ${item.color}` : '',
+      product.customizable && useMeasurements && hasMeasurements
+        ? 'Measurements provided'
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' | '),
+  };
+});
+
+                          const order: Order = {
+                            id: '',
+                            orderNumber: orderService.generateOrderNumber(),
+                            orderDate: new Date().toISOString(),
+                            deliveryDate: new Date(
+                              Date.now() + 14 * 86400000
+                            ).toISOString(),
+                            
+                            boutique: 2,
+
+                            items: orderItems,
+
+                            totalAmount: total,
+                            advancePaid: amountToPay,
+                            balanceAmount: total - amountToPay,
+
+                            status: 'PENDING',
+
+                            paymentStatus:
+                              paymentMode === 'advance'
+                                ? 'PARTIALLY_PAID'
+                                : 'PAID',
+
+                            paymentMethod,
+
+                            couponCode: coupon?.code,
+                            couponDiscount:
+                              discount > 0 ? discount : undefined,
+
+                            deliveryCharge: delivery,
+
+                            shippingAddress: selectedAddress!,
+
+                            customerName:
+                              user?.fullName ??
+                              user?.username ??
+                              '',
+
+                            customerEmail: user?.email ?? '',
+
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                          };
+
+                          // FIRST create the Django order
+                          const createdOrder = await createOrder(order);
+
+                          // THEN create payment using the REAL Django order ID
                           await paymentService.processPayment({
-                            orderId: 'pending',
+                            orderId: String(createdOrder.id),
                             amount: amountToPay,
                             method: paymentMethod,
                             isAdvance: paymentMode === 'advance',
                           });
-                          // Create order
-                          const orderItems: OrderItem[] = lines.map(({ item, product }) => {
-                            if (!product) throw new Error('Missing product');
-                            return {
-                              productId: product.id,
-                              productName: product.name,
-                              productImage: product.image,
-                              size: item.size,
-                              color: item.color,
-                              quantity: item.quantity,
-                              unitPrice: product.price,
-                              customizable: Boolean(product.customizable),
-                              hasMeasurements: Boolean(product.customizable && useMeasurements && hasMeasurements),
-                            };
-                          });
-                          const orderId = 'ord-' + Date.now().toString(36);
-                          const order: Order = {
-                            id: orderId,
-                            orderNumber: orderService.generateOrderNumber(),
-                            orderDate: new Date().toISOString(),
-                            deliveryDate: new Date(Date.now() + 14 * 86400000).toISOString(),
-                            items: orderItems,
-                            totalAmount: total,
-                            advancePaid: amountToPay,
-                            balanceAmount: total - amountToPay,
-                            status: 'PENDING',
-                            paymentStatus: paymentMode === 'advance' ? 'PARTIALLY_PAID' : 'PAID',
-                            paymentMethod,
-                            couponCode: coupon?.code,
-                            couponDiscount: discount > 0 ? discount : undefined,
-                            deliveryCharge: delivery,
-                            shippingAddress: selectedAddress!,
-                            customerName: user?.fullName ?? user?.username ?? "",
-                            customerEmail: user?.email ?? "",
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString(),
-                          };
-                          await createOrder(order);
+
                           clearCart();
-                          notify('Payment completed (demo)', 'info');
-                          navigate(`/order-confirmation/${orderId}`);
+
+                          notify('Payment completed', 'info');
+
+                          navigate(
+                            `/order-confirmation/${createdOrder.id}`
+                          );
                         } catch {
                           notify('Unable to complete payment', 'remove');
                         } finally {

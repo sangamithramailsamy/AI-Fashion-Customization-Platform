@@ -52,7 +52,7 @@ class DesignViewSet(viewsets.ModelViewSet):
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        queryset = Design.objects.select_related(
+        qs = Design.objects.select_related(
             "section",
         ).prefetch_related("images","variants")
 
