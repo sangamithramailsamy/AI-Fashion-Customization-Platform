@@ -20,23 +20,27 @@ export const orderService = {
 
   async create(order: Partial<Order>): Promise<Order> {
     const payload = {
-      boutique: order.boutique,
+  boutique: order.boutique,
 
-      order_date: order.orderDate?.split('T')[0],
-      delivery_date: order.deliveryDate?.split('T')[0],
+  order_date: order.orderDate?.split('T')[0],
+  delivery_date: order.deliveryDate?.split('T')[0],
 
-      advance_paid: order.advancePaid ?? 0,
-      status: order.status ?? 'PENDING',
-      notes: order.notes ?? '',
+  advance_paid: order.advancePaid ?? 0,
+  status: order.status ?? 'PENDING',
+  notes: order.notes ?? '',
 
-      items: (order.items ?? []).map((item) => ({
-        item_type: 'OTHERS',
+  // Send coupon code to Django.
+  // Django will validate and calculate the discount.
+  coupon_code: order.couponCode ?? null,
 
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        notes: '',
-      })),
-    };
+  items: (order.items ?? []).map((item) => ({
+    item_type: 'OTHERS',
+
+    quantity: item.quantity,
+    unit_price: item.unitPrice,
+    notes: item.notes ?? '',
+  })),
+};
 
     const res = await apiClient.post('/orders/orders/', payload);
 

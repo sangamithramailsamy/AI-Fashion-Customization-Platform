@@ -64,6 +64,18 @@ class Order(models.Model):
         editable=False
     )
 
+    delivery_charge = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
     advance_paid = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -123,15 +135,25 @@ class Order(models.Model):
         whenever an OrderItem changes.
         """
 
-        total = (
+        items_total = (
             self.items.aggregate(
                 total=Sum("subtotal")
             )["total"]
             or Decimal("0.00")
         )
 
-        self.total_amount = total
-        self.balance_amount = total - self.advance_paid
+        self.total_amount = (
+            items_total
+            - self.discount_amount
+            + self.delivery_charge
+        )
+
+        if self.total_amount < Decimal("0.00"):
+            self.total_amount = Decimal("0.00")
+
+        self.balance_amount = (
+            self.total_amount - self.advance_paid
+        )
 
         Order.objects.filter(pk=self.pk).update(
             total_amount=self.total_amount,

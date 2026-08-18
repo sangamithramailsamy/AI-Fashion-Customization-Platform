@@ -68,8 +68,15 @@ export default function CheckoutPage() {
     0
   );
   const discount = coupon?.discountAmount ?? 0;
-  const delivery = subtotal >= DELIVERY_THRESHOLD || subtotal === 0 ? 0 : DELIVERY_CHARGE;
-  const total = Math.max(0, subtotal - discount) + delivery;
+
+const delivery =
+  coupon
+    ? 0
+    : subtotal >= DELIVERY_THRESHOLD || subtotal === 0
+      ? 0
+      : DELIVERY_CHARGE;
+
+const total = Math.max(0, subtotal - discount) + delivery;
 
   const hasCustomizable = lines.some((l) => l.product?.customizable);
 

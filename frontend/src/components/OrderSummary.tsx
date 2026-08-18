@@ -34,9 +34,17 @@ export default function OrderSummary({
     0
   );
   const discount = coupon?.discountAmount ?? 0;
-  const computedDelivery =
-    deliveryCharge !== undefined ? deliveryCharge : subtotal >= freeDeliveryThreshold || subtotal === 0 ? 0 : 150;
-  const total = Math.max(0, subtotal - discount) + computedDelivery;
+
+const computedDelivery =
+  coupon
+    ? 0
+    : deliveryCharge !== undefined
+      ? deliveryCharge
+      : subtotal >= freeDeliveryThreshold || subtotal === 0
+        ? 0
+        : 150;
+
+const total = Math.max(0, subtotal - discount) + computedDelivery;
 
   return (
     <div className="bg-surface border border-token p-5">
