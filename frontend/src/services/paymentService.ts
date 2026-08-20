@@ -14,6 +14,24 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id: string;
+
+    config?: {
+      display?: {
+        blocks?: {
+          [key: string]: {
+          name: string;
+          instruments: {
+            method: string;
+          }[];
+        };
+      };
+      sequence?: string[];
+      preferences?: {
+        show_default_blocks?: boolean;
+      };
+    };
+  };
+
   handler: (response: RazorpayResponse) => void;
   modal?: {
     ondismiss?: () => void;
@@ -110,6 +128,26 @@ export const paymentService = {
           : 'Order Payment',
 
         order_id: data.razorpay_order_id,
+
+        config: {
+  display: {
+    blocks: {
+      upi_only: {
+        name: 'Pay via UPI',
+        instruments: [
+          {
+            method: 'upi',
+          },
+        ],
+      },
+    },
+    sequence: ['block.upi_only'],
+    preferences: {
+      show_default_blocks: false,
+    },
+  },
+},
+
 
         // 3. Razorpay calls this after successful payment
         handler: async (

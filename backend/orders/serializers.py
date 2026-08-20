@@ -168,6 +168,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
         # Create order first
         order = Order.objects.create(
+            delivery_charge=Decimal("150.00"),
             **validated_data
         )
 

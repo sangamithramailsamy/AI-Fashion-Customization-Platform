@@ -70,11 +70,9 @@ export default function CheckoutPage() {
   const discount = coupon?.discountAmount ?? 0;
 
 const delivery =
-  coupon
+  subtotal >= DELIVERY_THRESHOLD || subtotal === 0
     ? 0
-    : subtotal >= DELIVERY_THRESHOLD || subtotal === 0
-      ? 0
-      : DELIVERY_CHARGE;
+    : DELIVERY_CHARGE;
 
 const total = Math.max(0, subtotal - discount) + delivery;
 
