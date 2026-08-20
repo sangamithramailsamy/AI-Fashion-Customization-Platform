@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -58,6 +58,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [paymentMode, setPaymentMode] = useState<'full' | 'advance'>('full');
   const [processing, setProcessing] = useState(false);
+  const createdOrderRef = useRef<Order | null>(null);
 
   const lines = cart
     .map((item) => ({ item, product: getProductById(item.productId) }))
@@ -582,15 +583,21 @@ const total = Math.max(0, subtotal - discount) + delivery;
                           };
 
                           // FIRST create the Django order
-                          const createdOrder = await createOrder(order);
+                          let createdOrder = createdOrderRef.current;
 
-                          // THEN create payment using the REAL Django order ID
+                          if (!createdOrder) {
+                            createdOrder = await createOrder(order);
+                            createdOrderRef.current = createdOrder;
+                          }
+
+                          // Use the SAME order for payment/retry
                           await paymentService.processPayment({
                             orderId: String(createdOrder.id),
                             amount: amountToPay,
                             method: paymentMethod,
                             isAdvance: paymentMode === 'advance',
                           });
+
 
                           clearCart();
 

@@ -21,6 +21,7 @@ class IsOrderAccessible(BasePermission):
         # Tailor
         if user.role == UserRole.TAILOR:
             if obj.employee and obj.employee.user == user:
+
                 # Tailor can view
                 if request.method in SAFE_METHODS:
                     return True
@@ -33,10 +34,20 @@ class IsOrderAccessible(BasePermission):
 
         # Customer
         if user.role == UserRole.CUSTOMER:
-            return (
-                obj.customer
-                and obj.customer.user == user
-                and request.method in SAFE_METHODS
-            )
+            if not obj.customer or obj.customer.user != user:
+                return False
+
+            # Customers can view their own orders
+            if request.method in SAFE_METHODS:
+                return True
+
+            # Customers can cancel or pay their own orders
+            if (
+                request.method == "POST"
+                and getattr(view, "action", None) in ["cancel", "pay"]
+            ):
+                return True
+
+            return False
 
         return False

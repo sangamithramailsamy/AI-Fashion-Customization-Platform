@@ -34,7 +34,10 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     load();
   }, [load]);
 
-  const getOrder = useCallback((id: string) => orders.find((o) => o.id === id), [orders]);
+  const getOrder = useCallback(
+  (id: string) => orders.find((o) => String(o.id) === String(id)),
+  [orders]
+);
 
   const createOrder = useCallback(async (order: Order) => {
     const created = await orderService.create(order);

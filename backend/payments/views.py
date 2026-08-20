@@ -235,7 +235,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
                     "amount": amount_in_paise,
                     "currency": "INR",
                     "payment_capture": 1,
-                     "checkout_config_id": "config_TRFWiQbf7pKqa1",
                 }
             )
 

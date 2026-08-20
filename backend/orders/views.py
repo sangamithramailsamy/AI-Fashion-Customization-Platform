@@ -1,6 +1,10 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from django.utils import timezone
 
 from .models import Order, OrderItem
 from .serializers import OrderSerializer, OrderItemSerializer
@@ -118,6 +122,108 @@ class OrderViewSet(viewsets.ModelViewSet):
                 )
 
         serializer.save()
+
+    @action(
+            detail=True,
+            methods=["post"],
+            url_path="cancel"
+        )
+    def cancel(self, request, pk=None):
+        order = self.get_object()
+
+        # Only pending or in-progress orders can be cancelled
+        if order.status not in ["PENDING", "IN_PROGRESS"]:
+            return Response(
+                {
+                    "detail": "This order cannot be cancelled."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        reason = request.data.get("reason", "").strip()
+
+        if not reason:
+            return Response(
+                {
+                    "reason": "Cancellation reason is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        order.status = "CANCELLED"
+        order.cancellation_reason = reason
+        order.cancelled_at = timezone.now()
+        order.save()
+
+        return Response(
+            OrderSerializer(order, context={"request": request}).data,
+            status=status.HTTP_200_OK
+        )
+
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="pay"
+    )
+    def pay(self, request, pk=None):
+        order = self.get_object()
+
+        if order.status == "CANCELLED":
+            return Response(
+                {
+                    "detail": "Cannot make payment for a cancelled order."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        amount = request.data.get("amount")
+
+        if amount is None:
+            return Response(
+                {
+                    "amount": "Payment amount is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            from decimal import Decimal
+
+            amount = Decimal(str(amount))
+        except Exception:
+            return Response(
+                {
+                    "amount": "Invalid payment amount."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if amount <= 0:
+            return Response(
+                {
+                    "amount": "Payment amount must be greater than zero."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if amount > order.balance_amount:
+            return Response(
+                {
+                    "amount": "Payment cannot exceed the balance amount."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        order.advance_paid += amount
+        order.balance_amount = order.total_amount - order.advance_paid
+
+        order.save()
+
+        return Response(
+            OrderSerializer(order, context={"request": request}).data,
+            status=status.HTTP_200_OK
+        )
 
     def perform_destroy(self, instance):
         try:

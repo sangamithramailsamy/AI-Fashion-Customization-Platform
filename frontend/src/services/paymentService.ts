@@ -129,26 +129,6 @@ export const paymentService = {
 
         order_id: data.razorpay_order_id,
 
-        config: {
-  display: {
-    blocks: {
-      upi_only: {
-        name: 'Pay via UPI',
-        instruments: [
-          {
-            method: 'upi',
-          },
-        ],
-      },
-    },
-    sequence: ['block.upi_only'],
-    preferences: {
-      show_default_blocks: false,
-    },
-  },
-},
-
-
         // 3. Razorpay calls this after successful payment
         handler: async (
           response: RazorpayResponse
