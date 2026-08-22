@@ -13,12 +13,30 @@ export interface ProductSize {
   inStock: boolean;
 }
 
+// ---------- Product Variants ----------
+
+export interface ProductVariant {
+  id: number;
+  size: string;
+  color: string;
+  stock: number;
+  price: number;
+  sku: string;
+  isActive?: boolean;
+  design?: number;
+}
+
 export interface ProductImage {
   src: string;
   alt: string;
 }
 
-export type ProductBadge = 'New' | 'Bestseller' | 'Limited' | 'Custom';
+export type ProductBadge =
+  | 'New'
+  | 'Bestseller'
+  | 'Limited'
+  | 'Custom';
+
 export type ProductCategory =
   | 'Traditional'
   | 'Western'
@@ -31,22 +49,34 @@ export interface Product {
   id: number;
   name: string;
   description: string;
+
   category: ProductCategory;
   collection: string;
+
   images: ProductImage[];
   image: string;
+
   price: number;
   originalPrice?: number;
+
   sizes: ProductSize[];
   colors: ProductColor[];
+
+  // Backend DesignVariant data
+  variants?: ProductVariant[];
+
   stock: number;
+
   rating: number;
   reviewCount: number;
+
   featured?: boolean;
   newArrival?: boolean;
   customizable?: boolean;
   active?: boolean;
+
   badge?: ProductBadge;
+
   createdAt: string;
   popularity: number;
 }
@@ -63,12 +93,12 @@ export interface Collection {
   itemCount: number;
 
   pattern:
-    | "kolam"
-    | "slant"
-    | "textile"
-    | "shimmer"
-    | "casual"
-    | "editorial";
+    | 'kolam'
+    | 'slant'
+    | 'textile'
+    | 'shimmer'
+    | 'casual'
+    | 'editorial';
 }
 
 export interface NavItem {
@@ -78,7 +108,10 @@ export interface NavItem {
 
 // ---------- Auth ----------
 
-export type UserRole = 'customer' | 'owner' | 'admin';
+export type UserRole =
+  | 'customer'
+  | 'owner'
+  | 'admin';
 
 export interface AuthUser {
   id: number;
@@ -110,7 +143,10 @@ export interface RegisterPayload {
 
 // ---------- Customer Profile ----------
 
-export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
+export type Gender =
+  | 'MALE'
+  | 'FEMALE'
+  | 'OTHER';
 
 export interface CustomerProfile {
   id: number;
@@ -125,7 +161,10 @@ export interface CustomerProfile {
 
 // ---------- Addresses ----------
 
-export type AddressType = 'Home' | 'Work' | 'Other';
+export type AddressType =
+  | 'Home'
+  | 'Work'
+  | 'Other';
 
 export interface ShippingAddress {
   id: string;
@@ -148,7 +187,7 @@ export interface SleeveType {
   id: string;
   name: string;
   description: string;
-  illustration: string; // placeholder illustration key
+  illustration: string;
   measurementFields: MeasurementFieldDef[];
 }
 
@@ -165,7 +204,7 @@ export interface MeasurementFieldDef {
   label: string;
   unit: string;
   helper: string;
-  guideKey: string; // key into measurement guide data
+  guideKey: string;
 }
 
 export interface MeasurementValue {
@@ -192,7 +231,11 @@ export interface MeasurementVideo {
 
 // ---------- Coupons ----------
 
-export type CouponStatus = 'idle' | 'applied' | 'invalid' | 'expired';
+export type CouponStatus =
+  | 'idle'
+  | 'applied'
+  | 'invalid'
+  | 'expired';
 
 export interface Coupon {
   code: string;
@@ -241,7 +284,7 @@ export interface NotificationItem {
 export interface ReviewMedia {
   id: string;
   name: string;
-  preview: string; // object URL or data URL — frontend preview only
+  preview: string;
 }
 
 export interface ReviewItem {
@@ -259,39 +302,97 @@ export interface ReviewItem {
 
 // ---------- Orders ----------
 
-export type OrderStatus = 'PENDING' | 'IN_PROGRESS' | 'READY' | 'DELIVERED' | 'CANCELLED';
-export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'FAILED';
-export type PaymentMethod = 'upi' | 'card' | 'cod';
+export type OrderStatus =
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'READY'
+  | 'DELIVERED'
+  | 'CANCELLED';
+
+export type PaymentStatus =
+  | 'UNPAID'
+  | 'PARTIALLY_PAID'
+  | 'PAID'
+  | 'FAILED';
+
+export type PaymentMethod =
+  | 'upi'
+  | 'card'
+  | 'cod';
 
 export interface OrderItem {
+  id?: number;
+
+  // Backend order item
+  order?: number;
+  variant?: number | null;
   itemType: string;
+
+  // Product information
+  productId?: number;
+  productName?: string;
+  productImage?: string;
+
+  // Selected product options
+  size?: string;
+  color?: string;
+
+  // Customization information
+  customizable?: boolean;
+  hasMeasurements?: boolean;
+
+  // Quantity and pricing
   quantity: number;
   unitPrice: number;
+  subtotal?: number;
+
+  // Additional information
   notes?: string;
 }
 
 export interface Order {
   id: string;
+
   orderNumber: string;
+
   orderDate: string;
+
   deliveryDate?: string;
+
   boutique: number;
+
   items: OrderItem[];
+
   totalAmount: number;
+
   advancePaid: number;
+
   balanceAmount: number;
+
   status: OrderStatus;
+
   paymentStatus: PaymentStatus;
+
   paymentMethod?: PaymentMethod;
+
   couponCode?: string;
+
   couponDiscount?: number;
+
   deliveryCharge: number;
+
   shippingAddress: ShippingAddress;
+
   customerName: string;
+
   customerEmail: string;
+
   notes?: string;
+
   cancellationReason?: string;
+
   createdAt: string;
+
   updatedAt: string;
 }
 
@@ -317,15 +418,21 @@ export interface BoutiqueProfile {
   owner: string;
   phone: string;
   email: string;
+
   line1: string;
   line2?: string;
+
   city: string;
   state: string;
   pincode: string;
+
   description: string;
+
   openingTime: string;
   closingTime: string;
+
   active: boolean;
+
   logo?: string;
 }
 
@@ -359,7 +466,11 @@ export interface OwnerCustomer {
 
 // ---------- Employees ----------
 
-export type EmployeeRole = 'Tailor' | 'Designer' | 'Reception' | 'Delivery Staff';
+export type EmployeeRole =
+  | 'Tailor'
+  | 'Designer'
+  | 'Reception'
+  | 'Delivery Staff';
 
 export interface Employee {
   id: number;
@@ -392,17 +503,27 @@ export interface ProductionItem {
   productName: string;
   productImage: string;
   status: ProductionStatus;
+
   tailorId: number | null;
   tailorName: string | null;
+
   designerId: number | null;
   designerName: string | null;
+
   updatedAt: string;
 }
 
 // ---------- Payments ----------
 
-export type PaymentType = 'Full Payment' | 'Advance Payment' | 'Balance Payment';
-export type PaymentState = 'Paid' | 'Pending' | 'Refunded';
+export type PaymentType =
+  | 'Full Payment'
+  | 'Advance Payment'
+  | 'Balance Payment';
+
+export type PaymentState =
+  | 'Paid'
+  | 'Pending'
+  | 'Refunded';
 
 export interface PaymentRecord {
   id: string;
@@ -459,7 +580,9 @@ export interface ReportsData {
   revenueSeries: MonthlyPoint[];
   ordersSeries: MonthlyPoint[];
   customersSeries: MonthlyPoint[];
+
   totalRevenue: number;
+
   revenueGrowth: number;
   ordersGrowth: number;
   customersGrowth: number;

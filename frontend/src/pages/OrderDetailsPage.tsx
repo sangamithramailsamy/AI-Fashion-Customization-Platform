@@ -74,7 +74,7 @@ export default function OrderDetailsPage() {
   const handlePayBalance = async () => {
     setProcessing(true);
     try {
-      await payBalance(order.id, order.balanceAmount);
+      await payBalance(order.id, order.balanceAmount ?? 0);
       notify('Balance payment completed (demo)', 'info');
       setPayOpen(false);
     } catch {
@@ -159,7 +159,7 @@ export default function OrderDetailsPage() {
                       <p className="font-body text-sm text-token font-medium">{formatPrice(item.unitPrice * item.quantity)}</p>
                     </div>
                   </div>
-                  {canReview && !hasReviewed(item.productId) && (
+                  {canReview && item.productId !== undefined && !hasReviewed(item.productId) && (
                     <Link
                       to={`/account/reviews/write?orderId=${order.id}&productId=${item.productId}`}
                       className="self-start btn-primary px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] font-body inline-flex items-center gap-1.5 shrink-0"

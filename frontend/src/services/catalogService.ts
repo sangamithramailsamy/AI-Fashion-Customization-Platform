@@ -41,31 +41,33 @@ function mapProduct(item: any): Product {
 
   return {
     id: item.id,
+
     name: item.name,
+
     description: item.description ?? '',
 
-    price: Number(item.price ?? item.base_price ?? 0),
-    originalPrice: Number(
-      item.base_price ?? item.price ?? 0
+    price: Number(
+      item.price ??
+      item.base_price ??
+      0
     ),
 
-    image: item.image || item.thumbnail || '',
+    originalPrice: Number(
+      item.base_price ??
+      item.price ??
+      0
+    ),
 
-    /*
-     * New backend no longer returns category.
-     * The product belongs directly to a Section.
-     *
-     * For the frontend, section name is used as the
-     * display category/filter value.
-     */
+    image:
+      item.image ||
+      item.thumbnail ||
+      '',
+
     category:
       item.section ??
       item.category ??
       'Boutique Creation',
 
-    /*
-     * Section slug is the collection slug.
-     */
     collection:
       item.section_slug ??
       item.collection ??
@@ -75,14 +77,20 @@ function mapProduct(item: any): Product {
     stock,
 
     rating: 5,
+
     reviewCount: 0,
 
     featured,
+
     newArrival,
+
     customizable,
+
     active,
 
-    badge: newArrival ? 'New' : undefined,
+    badge: newArrival
+      ? 'New'
+      : undefined,
 
     colors: variants
       .filter((v: any) => v.color)
@@ -93,10 +101,36 @@ function mapProduct(item: any): Product {
 
     sizes: variants.map((v: any) => ({
       label: v.size,
-      inStock: Number(v.stock || 0) > 0,
+      inStock:
+        Number(v.stock || 0) > 0,
     })),
 
-    images: item.images ?? [],
+    /*
+     * IMPORTANT
+     *
+     * Keep the complete variant information.
+     *
+     * Example:
+     * XS + Cream → variant ID 47
+     */
+    variants: variants.map((v: any) => ({
+      id: Number(v.id),
+      size: v.size,
+      color: v.color,
+      stock: Number(v.stock || 0),
+      price: Number(
+        v.price ??
+        item.price ??
+        item.base_price ??
+        0
+      ),
+      sku: v.sku ?? '',
+      isActive:
+        v.is_active ?? true,
+    })),
+
+    images:
+      item.images ?? [],
 
     popularity: 0,
 
@@ -107,12 +141,15 @@ function mapProduct(item: any): Product {
 }
 
 export const catalogService = {
+
   // --------------------------------------------------
   // ALL PRODUCTS — SHOP
   // --------------------------------------------------
 
   async listProducts(): Promise<Product[]> {
-    const res = await apiClient.get('/catalog/designs/');
+    const res = await apiClient.get(
+      '/catalog/designs/'
+    );
 
     const data = Array.isArray(res.data)
       ? res.data
@@ -166,7 +203,9 @@ export const catalogService = {
       );
 
       return mapProduct(res.data);
+
     } catch (err: any) {
+
       if (err.response?.status === 404) {
         return null;
       }
@@ -190,10 +229,16 @@ export const catalogService = {
 
     return data.map((item: any) => ({
       id: String(item.id),
+
       slug: item.slug,
+
       name: item.name,
-      description: item.description ?? '',
-      longDescription: item.description ?? '',
+
+      description:
+        item.description ?? '',
+
+      longDescription:
+        item.description ?? '',
 
       image:
         item.image ||
@@ -216,6 +261,7 @@ export const catalogService = {
     slug: string
   ): Promise<Collection | null> {
     try {
+
       const res = await apiClient.get(
         '/catalog/sections/'
       );
@@ -235,10 +281,14 @@ export const catalogService = {
 
       return {
         id: String(item.id),
+
         slug: item.slug,
+
         name: item.name,
+
         description:
           item.description ?? '',
+
         longDescription:
           item.description ?? '',
 
@@ -253,7 +303,9 @@ export const catalogService = {
 
         pattern: 'textile',
       };
+
     } catch (err: any) {
+
       if (err.response?.status === 404) {
         return null;
       }
@@ -269,6 +321,7 @@ export const catalogService = {
   async getProductsByCollection(
     slug: string
   ): Promise<Product[]> {
+
     const res = await apiClient.get(
       `/catalog/designs/?collection=${encodeURIComponent(
         slug
@@ -287,6 +340,7 @@ export const catalogService = {
   // --------------------------------------------------
 
   async getBoutiqueCreations(): Promise<Product[]> {
+
     const res = await apiClient.get(
       '/catalog/designs/boutique-creations/'
     );

@@ -465,7 +465,7 @@ export const ownerOrderService = {
 
     const data = await ownerRequest<any>({
       method: 'PATCH',
-      url: `/owner/orders/${id}/status/`,
+      url: `/orders/orders/${id}/`,
       data: {
         status,
       },

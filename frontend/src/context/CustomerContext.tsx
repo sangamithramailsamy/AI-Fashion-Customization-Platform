@@ -112,14 +112,20 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addAddress = useCallback(
-    async (addr: ShippingAddress) => {
-      const withId = { ...addr, id: uid() };
-      let list = [...addresses, withId];
-      if (withId.isDefault) list = list.map((a) => ({ ...a, isDefault: a.id === withId.id }));
-      await saveAddresses(list);
-    },
-    [addresses, saveAddresses]
-  );
+  async (addr: ShippingAddress) => {
+    const withId = { ...addr, id: uid() };
+    let list = [...addresses, withId];
+
+    if (withId.isDefault)
+      list = list.map((a) => ({
+        ...a,
+        isDefault: a.id === withId.id
+      }));
+
+    await saveAddresses(list);
+  },
+  [addresses, saveAddresses]
+);
 
   const updateAddress = useCallback(
     async (id: string, next: ShippingAddress) => {

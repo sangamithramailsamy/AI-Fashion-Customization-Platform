@@ -39,6 +39,14 @@ class Order(models.Model):
         related_name="orders"
     )
 
+    shipping_address = models.ForeignKey(
+        "shopping.ShippingAddress",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders",
+    )
+
     employee = models.ForeignKey(
         Employee,
         on_delete=models.SET_NULL,
@@ -252,6 +260,24 @@ class OrderItem(models.Model):
         Order,
         on_delete=models.CASCADE,
         related_name="items"
+    )
+    
+    variant = models.ForeignKey(
+        "catalog.DesignVariant",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="order_items",
+    )
+
+    product_name = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    product_image = models.URLField(
+        max_length=1000,
+        blank=True
     )
 
     item_type = models.CharField(
