@@ -155,9 +155,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         # -----------------------------------------
         # Shipping Address
         # -----------------------------------------
-        shipping_address_id = (
-            self.request.data.get("shippingAddress")
-        )
+        shipping_address_id = self.request.data.get("shippingAddress")
+
+        if not shipping_address_id:
+            shipping_address_id = self.request.data.get("shipping_address_id")
 
         shipping_address = None
 

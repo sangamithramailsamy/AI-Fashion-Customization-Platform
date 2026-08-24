@@ -44,30 +44,35 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const [addresses, setAddresses] = useState<ShippingAddress[]>([]);
   const [measurements, setMeasurements] = useState<CustomerMeasurement | null>(null);
   const [loading, setLoading] = useState(true);
-
   const load = useCallback(async () => {
-    console.log("LOAD STARTED");
+  console.log("LOAD STARTED");
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      console.log("Calling Profile API...");
+  try {
+    console.log("Calling Profile API...");
 
-      const profile = await customerService.getProfile();
+    const [profile, addressList] = await Promise.all([
+      customerService.getProfile(),
+      addressService.list(),
+    ]);
 
-      console.log("PROFILE RECEIVED:", profile);
+    console.log("PROFILE RECEIVED:", profile);
+    console.log("ADDRESSES RECEIVED:", addressList);
 
-      setProfile(profile);
+    setProfile(profile);
+    setAddresses(addressList);
 
-      console.log("Profile saved to state");
-    } catch (err) {
-      console.error("PROFILE ERROR:", err);
-      setProfile(null);
-    } finally {
-      setLoading(false);
-      console.log("LOAD FINISHED");
-    }
-  }, []);
+    console.log("Profile and addresses saved to state");
+  } catch (err) {
+    console.error("CUSTOMER LOAD ERROR:", err);
+    setProfile(null);
+    setAddresses([]);
+  } finally {
+    setLoading(false);
+    console.log("LOAD FINISHED");
+  }
+}, []);
 
   useEffect(() => {
   const token = getAccessToken();

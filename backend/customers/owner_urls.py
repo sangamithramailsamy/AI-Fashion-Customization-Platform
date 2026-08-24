@@ -1,22 +1,18 @@
 from django.urls import path
 
 from .views import (
-    CustomerProfileView,
     OwnerCustomerListView,
     OwnerCustomerDetailView,
 )
 
 urlpatterns = [
-    path("profile/", CustomerProfileView.as_view(), name="customer-profile"),
-
     path(
-        "owner/",
+        "",
         OwnerCustomerListView.as_view(),
         name="owner-customer-list",
     ),
-
     path(
-        "owner/<int:pk>/",
+        "<int:pk>/",
         OwnerCustomerDetailView.as_view(),
         name="owner-customer-detail",
     ),

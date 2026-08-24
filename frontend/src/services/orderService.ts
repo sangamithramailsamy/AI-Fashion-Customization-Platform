@@ -221,7 +221,7 @@ export const orderService = {
        * Send the selected shipping address ID
        * to Django.
        */
-      shipping_address_id:
+      shippingAddress:
         order.shippingAddress?.id
         ? Number(order.shippingAddress.id)
         : null,

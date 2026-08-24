@@ -67,10 +67,23 @@ export default function CustomerManagementPage() {
     return customers.filter((c) => c.fullName.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q));
   }, [customers, search]);
 
-  const customerOrders = detail ? detail.orders : (selected ? orders.filter((o) => o.customerName === selected.fullName) : []);
-  const customerPayments = detail ? detail.payments : (selected ? payments.filter((p) => p.customerName === selected.fullName) : []);
-  const customerAddresses: ShippingAddress[] = detail ? detail.addresses : [];
-  const customerMeasurements: CustomerMeasurement | null = detail ? detail.measurements : null;
+  const customerOrders =
+  detail?.orders ??
+  (selected
+    ? orders.filter((o) => o.customerName === selected.fullName)
+    : []);
+
+const customerPayments =
+  detail?.payments ??
+  (selected
+    ? payments.filter((p) => p.customerName === selected.fullName)
+    : []);
+
+const customerAddresses: ShippingAddress[] =
+  detail?.addresses ?? [];
+
+const customerMeasurements: CustomerMeasurement | null =
+  detail?.measurements ?? null;
 
   return (
     <div>
@@ -122,8 +135,15 @@ export default function CustomerManagementPage() {
                   <td className="px-4 py-3 font-body text-sm text-token">{c.ordersCount}</td>
                   <td className="px-4 py-3 font-body text-sm text-token hidden lg:table-cell">{formatPrice(c.totalSpent)}</td>
                   <td className="px-4 py-3 text-right">
-                    <button className="font-body text-xs uppercase tracking-[0.15em] text-primary hover:underline">Profile</button>
-                  </td>
+                    <button
+  onClick={(e) => {
+    e.stopPropagation();
+    openDetail(c);
+  }}
+  className="font-body text-xs uppercase tracking-[0.15em] text-primary hover:underline"
+>
+  Profile
+</button>   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (

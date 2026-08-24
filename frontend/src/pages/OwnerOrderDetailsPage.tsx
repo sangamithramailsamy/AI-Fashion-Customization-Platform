@@ -83,24 +83,40 @@ export default function OwnerOrderDetailsPage() {
             {STATUS_FLOW.map((status, i) => {
               const done = i < currentIdx;
               const current = i === currentIdx;
+              const next = i === currentIdx + 1;
+
               return (
                 <div key={status} className="flex items-center">
                   <button
                     onClick={() => handleStatusChange(status)}
-                    disabled={updating || current}
+                    disabled={updating || current || !next}
                     className="px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-body border transition-colors disabled:opacity-60"
                     style={{
-                      borderColor: done || current ? 'var(--primary)' : 'var(--border)',
+                      borderColor:
+                        done || current ? 'var(--primary)' : 'var(--border)',
                       background: current ? 'var(--primary)' : 'transparent',
-                      color: current ? 'var(--btn-text)' : done ? 'var(--primary)' : 'var(--text-muted)',
-                    }}
-                  >
-                    {ORDER_STATUS_FLOW[i].label}
-                  </button>
-                  {i < STATUS_FLOW.length - 1 && <ChevronRight size={14} className="text-muted mx-1" />}
-                </div>
-              );
-            })}
+                      color:
+                        current
+                          ? 'var(--btn-text)'
+                          : done
+                            ? 'var(--primary)'
+                            : next
+                              ? 'var(--text)'
+                              : 'var(--text-muted)',
+                      }}
+                    >
+                      {ORDER_STATUS_FLOW[i].label}
+                    </button>
+
+                    {i < STATUS_FLOW.length - 1 && (
+                      <ChevronRight
+                        size={14}
+                        className="text-muted mx-1"
+                      />
+                    )}
+                  </div>
+                );
+              })}
           </div>
           {updating && <p className="font-body text-xs text-muted mt-3">Updating…</p>}
         </div>

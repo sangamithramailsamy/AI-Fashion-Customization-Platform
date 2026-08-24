@@ -679,7 +679,7 @@ export const paymentService = {
 
     return ownerRequest<PaymentRecord[]>({
       method: 'GET',
-      url: '/owner/payments/',
+      url: '/payments/',
     });
   },
 
@@ -692,7 +692,7 @@ export const paymentService = {
 
       return await ownerRequest<PaymentRecord>({
         method: 'GET',
-        url: `/owner/payments/${id}/`,
+        url: `/payments/${id}/`,
       });
 
     } catch (err: any) {
@@ -713,7 +713,7 @@ export const paymentService = {
 
     return ownerRequest<PaymentRecord>({
       method: 'PATCH',
-      url: `/owner/payments/${id}/`,
+      url: `/payments/${id}/`,
       data: {
         state,
       },

@@ -238,10 +238,17 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 }
             )
 
-        except Exception:
+        except Exception as e:
+            print("========== RAZORPAY ORDER ERROR ==========")
+            print("ERROR:", repr(e))
+            print("KEY ID:", settings.RAZORPAY_KEY_ID)
+            print("AMOUNT:", amount_in_paise)
+            print("==========================================")
+
             return Response(
                 {
-                    "detail": "Unable to create Razorpay order."
+                    "detail": "Unable to create Razorpay order.",
+                    "error": str(e),
                 },
                 status=status.HTTP_502_BAD_GATEWAY,
             )
