@@ -569,6 +569,7 @@ export interface DashboardStats {
   totalProducts: number;
   totalReviews: number;
   totalNotifications: number;
+  
 }
 
 export interface MonthlyPoint {

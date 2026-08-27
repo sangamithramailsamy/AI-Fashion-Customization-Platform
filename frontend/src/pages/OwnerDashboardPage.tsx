@@ -36,29 +36,48 @@ export default function OwnerDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      ownerOrderService.list(), ownerProductService.list(), ownerCustomerService.list(),
-      paymentService.list(), productionService.list(), ownerNotificationService.list(),
-      reportsService.getDashboardStats().catch(() => null),
-    ])
-      .then(([o, p, c, pay, prod, n, stats]) => {
-        setOrders(o); setProducts(p); setCustomers(c); setPayments(pay); setProduction(prod); setNotifications(n);
-        setDashboardStats(stats);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  Promise.all([
+    ownerOrderService.list().catch(() => []),
+    ownerProductService.list().catch(() => []),
+    ownerCustomerService.list().catch(() => []),
+    paymentService.list().catch(() => []),
+    productionService.list().catch(() => []),
+    ownerNotificationService.list().catch(() => []),
+    reportsService.getDashboardStats().catch(() => null),
+  ])
+    .then(([o, p, c, pay, prod, n, stats]) => {
+      setOrders(o);
+      setProducts(p);
+      setCustomers(c);
+      setPayments(pay);
+      setProduction(prod);
+      setNotifications(n);
+      setDashboardStats(stats);
+    })
+    .finally(() => setLoading(false));
+}, []);
 
   const pendingCount = orders.filter((o) => o.status === 'PENDING').length;
+
   const inProgressCount = orders.filter((o) => o.status === 'IN_PROGRESS').length;
+
   const readyCount = orders.filter((o) => o.status === 'READY').length;
+
   const deliveredCount = orders.filter((o) => o.status === 'DELIVERED').length;
+
   const activeOrders = orders.filter((o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED').length;
-  const revenue = dashboardStats?.totalRevenue ?? orders.filter((o) => o.status !== 'CANCELLED').reduce((sum, o) => sum + o.advancePaid, 0);
+
+  const revenue = dashboardStats?.totalRevenue ?? 0;
+
   const monthlyRevenue = dashboardStats?.monthlyRevenue ?? 0;
-  const pendingPayments = payments.filter((p) => p.state === 'Pending').reduce((s, p) => s + p.amount, 0);
-  const pendingProduction = production.filter((p) => p.status === 'Pending' || p.status === 'Designing').length;
+
+  const pendingPayments = dashboardStats?.pendingPayments ?? 0;
+
+  const pendingProduction = dashboardStats?.pendingProduction ?? 0;
+
   const lowStock = products.filter((p) => p.stock <= 5);
-  const lowStockCount = lowStock.length;
+
+  const lowStockCount = dashboardStats?.lowStockCount ?? lowStock.length;
 
   const stats: StatCard[] = [
     { label: 'Total Revenue', value: formatPrice(revenue), icon: DollarSign, accent: 'var(--anim-olive)' },
@@ -83,7 +102,7 @@ export default function OwnerDashboardPage() {
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <p className="font-body uppercase tracking-[0.3em] text-xs text-muted mb-2">Dashboard</p>
+          <p className ="font-body uppercase tracking-[0.3em] text-xs text-muted mb-2">Dashboard</p>
           <h1 className="font-display text-3xl md:text-4xl text-token">Boutique Overview</h1>
           <p className="font-body text-sm text-muted mt-2">A snapshot of your atelier today.</p>
         </div>

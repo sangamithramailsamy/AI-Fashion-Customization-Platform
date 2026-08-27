@@ -559,56 +559,120 @@ export const ownerCustomerService = {
 // EMPLOYEE SERVICE
 // ============================================================
 
+function normalizeEmployeeRole(role: string): Employee['role'] {
+  switch (role?.toLowerCase()) {
+    case 'tailor':
+      return 'Tailor';
+    case 'designer':
+      return 'Designer';
+    case 'reception':
+      return 'Reception';
+    case 'delivery staff':
+    case 'delivery_staff':
+      return 'Delivery Staff';
+    default:
+      return 'Tailor';
+  }
+}
+
 export const employeeService = {
-
   async list(): Promise<Employee[]> {
-
-    return ownerRequest<Employee[]>({
+    const res = await ownerRequest<any[]>({
       method: 'GET',
-      url: '/owner/employees/',
+      url: '/employees/',
     });
-  },
 
+    return res.map((e) => ({
+      id: e.id,
+      fullName: e.employee_name ?? '',
+      email: e.email ?? '',
+      phone: e.phone ?? '',
+      role: normalizeEmployeeRole(e.role),
+      active: e.status ?? false,
+      joinedAt: e.joining_date ?? '',
+      assignedOrders: e.assigned_orders ?? 0,
+    }));
+  },
 
   async create(
-    employee: Omit<
-      Employee,
-      'id' | 'joinedAt' | 'assignedOrders'
-    >
+    employee: Omit<Employee, 'id' | 'joinedAt' | 'assignedOrders'>
   ): Promise<Employee> {
-
-    return ownerRequest<Employee>({
+    const res = await ownerRequest<any>({
       method: 'POST',
-      url: '/owner/employees/',
-      data: employee,
+      url: '/employees/',
+      data: {
+        employee_name: employee.fullName,
+        email: employee.email,
+        phone: employee.phone,
+        role: employee.role.toLowerCase(),
+        status: employee.active,
+        joining_date: new Date().toISOString().split('T')[0],
+      },
     });
-  },
 
+    return {
+      id: res.id,
+      fullName: res.employee_name ?? '',
+      email: res.email ?? '',
+      phone: res.phone ?? '',
+      role: normalizeEmployeeRole(res.role),
+      active: res.status ?? false,
+      joinedAt: res.joining_date ?? '',
+      assignedOrders: res.assigned_orders ?? 0,
+    };
+  },
 
   async update(
     id: number,
     updates: Partial<Employee>
   ): Promise<Employee> {
+    const data: any = {};
 
-    return ownerRequest<Employee>({
+    if (updates.fullName !== undefined) {
+      data.employee_name = updates.fullName;
+    }
+
+    if (updates.email !== undefined) {
+      data.email = updates.email;
+    }
+
+    if (updates.phone !== undefined) {
+      data.phone = updates.phone;
+    }
+
+    if (updates.role !== undefined) {
+      data.role = updates.role.toLowerCase();
+    }
+
+    if (updates.active !== undefined) {
+      data.status = updates.active;
+    }
+
+    const res = await ownerRequest<any>({
       method: 'PATCH',
-      url: `/owner/employees/${id}/`,
-      data: updates,
+      url: `/employees/${id}/`,
+      data,
     });
+
+    return {
+      id: res.id,
+      fullName: res.employee_name ?? '',
+      email: res.email ?? '',
+      phone: res.phone ?? '',
+      role: normalizeEmployeeRole(res.role),
+      active: res.status ?? false,
+      joinedAt: res.joining_date ?? '',
+      assignedOrders: res.assigned_orders ?? 0,
+    };
   },
 
-
-  async remove(
-    id: number
-  ): Promise<void> {
-
+  async remove(id: number): Promise<void> {
     await ownerRequest({
       method: 'DELETE',
-      url: `/owner/employees/${id}/`,
+      url: `/employees/${id}/`,
     });
   },
 };
-
 
 // ============================================================
 // PRODUCTION SERVICE
@@ -620,7 +684,7 @@ export const productionService = {
 
     return ownerRequest<ProductionItem[]>({
       method: 'GET',
-      url: '/owner/production/',
+      url: '/production/',
     });
   },
 
@@ -632,7 +696,7 @@ export const productionService = {
 
     return ownerRequest<ProductionItem>({
       method: 'PATCH',
-      url: `/owner/production/${id}/`,
+      url: `/production/${id}/`,
       data: updates,
     });
   },
@@ -645,7 +709,7 @@ export const productionService = {
 
     return ownerRequest<ProductionItem>({
       method: 'POST',
-      url: `/owner/production/${id}/assign/`,
+      url: `/production/${id}/assign/`,
       data: {
         employee_id: employeeId,
       },
@@ -660,7 +724,7 @@ export const productionService = {
 
     return ownerRequest<ProductionItem>({
       method: 'PATCH',
-      url: `/owner/production/${id}/status/`,
+      url: `/production/${id}/status/`,
       data: {
         status,
       },
@@ -675,14 +739,37 @@ export const productionService = {
 
 export const paymentService = {
 
+  
   async list(): Promise<PaymentRecord[]> {
+  const res = await ownerRequest<any[]>({
+    method: 'GET',
+    url: '/payments/',
+  });
 
-    return ownerRequest<PaymentRecord[]>({
-      method: 'GET',
-      url: '/payments/',
-    });
-  },
+  return res.map((p) => ({
+    id: String(p.id),
+    orderNumber: p.order_number ?? p.order?.order_number ?? '',
+    customerName: p.customer_name ?? p.order?.customer_name ?? '',
+    amount: Number(p.amount ?? 0),
 
+    type:
+      p.payment_type === 'FULL'
+        ? 'Full Payment'
+        : p.payment_type === 'ADVANCE'
+          ? 'Advance Payment'
+          : 'Balance Payment',
+
+    state:
+      p.status === 'SUCCESS'
+        ? 'Paid'
+        : p.status === 'REFUNDED'
+          ? 'Refunded'
+          : 'Pending',
+
+    method: p.payment_method ?? 'cod',
+    date: p.payment_date ?? '',
+  }));
+},
 
   async get(
     id: string
@@ -848,12 +935,11 @@ export const ownerNotificationService = {
 export const reportsService = {
 
   async getDashboardStats(): Promise<DashboardStats> {
-
-    return ownerRequest<DashboardStats>({
-      method: 'GET',
-      url: '/owner/dashboard/stats/',
-    });
-  },
+  return ownerRequest<DashboardStats>({
+    method: 'GET',
+    url: '/dashboard/',
+  });
+},
 
 
   async getReports(): Promise<ReportsData> {

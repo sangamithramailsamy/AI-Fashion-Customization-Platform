@@ -38,8 +38,15 @@ export default function EmployeeManagementPage() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   useEffect(() => {
-    employeeService.list().then(setEmployees).finally(() => setLoading(false));
-  }, []);
+  employeeService
+    .list()
+    .then(setEmployees)
+    .catch((error) => {
+      console.error('Failed to load employees:', error);
+      notify('Unable to load employees', 'remove');
+    })
+    .finally(() => setLoading(false));
+}, [notify]);
 
   const filtered = employees.filter((e) => {
     if (search && !e.fullName.toLowerCase().includes(search.toLowerCase()) && !e.email.toLowerCase().includes(search.toLowerCase())) return false;
