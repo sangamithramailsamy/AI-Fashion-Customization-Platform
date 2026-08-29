@@ -57,7 +57,16 @@ export default function WriteReviewPage() {
     Array.from(files).slice(0, 4 - media.length).forEach((file) => {
       if (!file.type.startsWith('image/')) return;
       const preview = URL.createObjectURL(file);
-      setMedia((prev) => [...prev, { id: 'media-' + Date.now() + Math.random().toString(36).slice(2, 6), name: file.name, preview }]);
+
+setMedia((prev) => [
+  ...prev,
+  {
+    id: 'media-' + Date.now() + Math.random().toString(36).slice(2, 6),
+    name: file.name,
+    preview,
+    file,
+  }
+]);
     });
   };
 
@@ -80,15 +89,14 @@ export default function WriteReviewPage() {
     setSubmitting(true);
     try {
       await submitReview({
-        productId: item.productId,
-        productName: item.productName,
-        productImage: item.productImage,
-        orderId: order.id,
+        productId: item.productId ?? productId,
+        productName: item.productName ?? '',
+        productImage: item.productImage ?? '',
+        orderId,
         rating,
-        title: title.trim() || 'My Review',
-        body: body.trim(),
-        media,
-      });
+        title,
+        body,
+        media,});
       notify('Review published', 'info');
       navigate('/account/reviews');
     } catch {

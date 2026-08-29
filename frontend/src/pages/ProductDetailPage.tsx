@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,6 +8,7 @@ import {
 import { useCatalog } from '@/context/CatalogContext';
 import { useShop } from '@/context/ShopContext';
 import { useToast } from '@/context/ToastContext';
+import { reviewService } from '@/services/reviewService';
 
 function formatPrice(n: number) {
   return '₹' + n.toLocaleString('en-IN');
@@ -26,6 +27,26 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  useEffect(() => {
+  if (!product?.id) return;
+
+  setReviewsLoading(true);
+
+  reviewService
+    .listByProduct(product.id)
+    .then(setReviews)
+    .catch((error) => {
+      console.error('Failed to load product reviews:', error);
+      setReviews([]);
+    })
+    .finally(() => {
+      setReviewsLoading(false);
+    });
+}, [product?.id]);
+
   if (!product) {
     return (
       <div className="pt-36 pb-20 text-center">
@@ -43,6 +64,17 @@ export default function ProductDetailPage() {
     : 0;
   const inStock = product.stock > 0;
   const sizeInStock = (label: string) => product.sizes.find((s) => s.label === label)?.inStock ?? false;
+  const galleryImages =
+  product.images?.length > 0
+    ? product.images
+    : product.image
+      ? [
+          {
+            src: product.image,
+            alt: product.name,
+          },
+        ]
+      : [];
 
   const validateSelection = (): { size: string; color: string } | null => {
     if (product.sizes.length > 1 && !selectedSize) {
@@ -89,7 +121,7 @@ export default function ProductDetailPage() {
           <div className="flex flex-col-reverse md:flex-row gap-4">
             {/* Thumbnails */}
             <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-visible">
-              {product.images.map((im, i) => (
+              {galleryImages.map((im, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
@@ -106,17 +138,25 @@ export default function ProductDetailPage() {
             {/* Main image */}
             <div className="relative flex-1 aspect-[3/4] overflow-hidden bg-surface border border-token">
               <AnimatePresence mode="wait">
-                <motion.img
-                  key={activeImage}
-                  src={product.images[activeImage].src}
-                  alt={product.images[activeImage].alt}
-                  initial={{ opacity: 0, scale: 1.02 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              </AnimatePresence>
+  {galleryImages.length > 0 && galleryImages[activeImage] ? (
+  <motion.img
+    key={activeImage}
+      src={galleryImages[activeImage].src}
+      alt={galleryImages[activeImage].alt}
+      initial={{ opacity: 0, scale: 1.02 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="absolute inset-0 w-full h-full object-cover"
+    />
+  ) : (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <span className="font-body text-sm text-muted">
+        No image available
+      </span>
+    </div>
+  )}
+</AnimatePresence>
               {product.badge && (
                 <span className="absolute top-4 left-4 px-3 py-1.5 bg-primary text-[10px] uppercase tracking-[0.15em] font-body" style={{ color: 'var(--btn-text)' }}>
                   {product.badge}
@@ -287,6 +327,93 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+        <section className="mt-12 border-t border-token pt-10">
+  <div className="flex items-center justify-between mb-6">
+    <div>
+      <p className="font-body text-xs uppercase tracking-[0.2em] text-muted">
+        Customer Reviews
+      </p>
+
+      <h2 className="font-display text-2xl text-token mt-1">
+        Reviews for {product.name}
+      </h2>
+    </div>
+
+    <div className="text-right">
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            size={16}
+            fill={
+              star <= Math.round(
+                reviews.length > 0
+                  ? reviews.reduce(
+                      (sum, review) => sum + Number(review.rating || 0),
+                      0
+                    ) / reviews.length
+                  : 0
+              )
+                ? "currentColor"
+                : "none"
+            }
+          />
+        ))}
+      </div>
+
+      <p className="font-body text-xs text-muted mt-1">
+        {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+      </p>
+    </div>
+  </div>
+
+  {reviewsLoading ? (
+    <p className="font-body text-sm text-muted">
+      Loading reviews...
+    </p>
+  ) : reviews.length === 0 ? (
+    <p className="font-body text-sm text-muted">
+      No reviews yet for this dress.
+    </p>
+  ) : (
+    <div className="space-y-6">
+      {reviews.map((review) => (
+        <div
+          key={review.id}
+          className="border-b border-token pb-6"
+        >
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                size={15}
+                fill={
+                  star <= Number(review.rating || 0)
+                    ? "currentColor"
+                    : "none"
+                }
+              />
+            ))}
+          </div>
+
+          <p className="font-body text-sm text-token mt-2">
+            {review.customer_name ?? 'Customer'}
+          </p>
+
+          <p className="font-body text-sm text-muted mt-2">
+            {review.review_text ?? ''}
+          </p>
+
+          <p className="font-body text-xs text-muted mt-2">
+            {review.created_at
+              ? new Date(review.created_at).toLocaleDateString('en-IN')
+              : ''}
+          </p>
+        </div>
+      ))}
+    </div>
+  )}
+</section>
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ const TYPE_META: Record<OwnerNotificationType, { icon: typeof Bell; label: strin
   order: { icon: ShoppingBag, label: 'Order Update', color: 'var(--anim-bronze)' },
   payment: { icon: CreditCard, label: 'Payment', color: 'var(--anim-olive)' },
   production: { icon: Scissors, label: 'Production', color: 'var(--anim-bronze)' },
+  custom_design: { icon: Scissors, label: 'Custom Design', color: 'var(--anim-bronze)' },
 };
 
 interface SendForm {
@@ -25,6 +26,55 @@ interface SendForm {
 
 const EMPTY_FORM: SendForm = { type: 'broadcast', title: '', message: '', audience: 'all' };
 
+const mapNotification = (n: any): OwnerNotification => {
+  let type: OwnerNotificationType = 'broadcast';
+
+  if (n.notification_type === 'CUSTOM_DESIGN_REQUEST') {
+    type = 'custom_design';
+  } else if (
+    n.notification_type === 'ORDER_PLACED' ||
+    n.notification_type === 'ORDER_ACCEPTED' ||
+    n.notification_type === 'ORDER_CANCELLED' ||
+    n.notification_type === 'ORDER_DELIVERED'
+  ) {
+    type = 'order';
+  } else if (n.notification_type === 'PAYMENT_RECEIVED') {
+    type = 'payment';
+  } else if (
+    n.notification_type === 'ORDER_STARTED' ||
+    n.notification_type === 'ORDER_READY'
+  ) {
+    type = 'production';
+  }
+
+  return {
+    id: String(n.id),
+    type,
+    title: n.title,
+    message: n.message,
+    audience: n.order ? 'order' : 'all',
+    sentAt: n.created_at,
+    read: n.is_read,
+
+    customDesign: n.custom_design_details
+      ? {
+          id: n.custom_design_details.id,
+          customer: n.custom_design_details.customer,
+          customer_name: n.custom_design_details.customer_name,
+          occasion: n.custom_design_details.occasion,
+          description: n.custom_design_details.description,
+          colors: n.custom_design_details.colors,
+          fabric: n.custom_design_details.fabric,
+          silhouette: n.custom_design_details.silhouette,
+          inspiration_image: n.custom_design_details.inspiration_image,
+          status: n.custom_design_details.status,
+          created_at: n.custom_design_details.created_at,
+          updated_at: n.custom_design_details.updated_at,
+        }
+      : null,
+  };
+};
+
 export default function NotificationManagementPage() {
   const { notify } = useToast();
   const [notifications, setNotifications] = useState<OwnerNotification[]>([]);
@@ -35,8 +85,17 @@ export default function NotificationManagementPage() {
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    ownerNotificationService.list().then(setNotifications).finally(() => setLoading(false));
-  }, []);
+  ownerNotificationService
+    .list()
+    .then((data) => {
+      setNotifications(data.map(mapNotification));
+    })
+    .catch((error) => {
+      console.error('Failed to load notifications:', error);
+      notify('Unable to load notifications', 'remove');
+    })
+    .finally(() => setLoading(false));
+}, []);
 
   const handleSend = async () => {
     const e: Record<string, string> = {};
@@ -48,9 +107,11 @@ export default function NotificationManagementPage() {
     setSending(true);
     try {
       const created = await ownerNotificationService.send({
-        type: form.type, title: form.title.trim(), message: form.message.trim(), audience: form.audience,
+        notification_type: form.type,
+        title: form.title.trim(),
+        message: form.message.trim(),
       });
-      setNotifications((prev) => [created, ...prev]);
+      setNotifications((prev) => [mapNotification(created), ...prev]);
       notify('Notification sent', 'info');
       setModalOpen(false);
       setForm(EMPTY_FORM);
@@ -128,9 +189,86 @@ export default function NotificationManagementPage() {
                         <p className="font-body text-xs uppercase tracking-[0.1em] mt-0.5" style={{ color: meta.color }}>{meta.label}</p>
                       </div>
                       <span className="font-body text-xs text-muted shrink-0">{fmtDate(n.sentAt)}</span>
+                    </div> <p className="font-body text-xs text-muted mt-2">Audience: {n.audience === 'all' ? 'All customers' : 'Specific order'}</p>
+                    {n.customDesign && (
+                  <div className="mt-4 border border-token p-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+
+                    {n.customDesign.inspiration_image && (
+                      <img
+                        src={n.customDesign.inspiration_image}
+                        alt={n.customDesign.description || 'Custom design'}
+                        className="w-32 h-40 object-cover border border-token shrink-0"
+                      />
+                    )}
+
+                    <div className="flex-1">
+                      <p className="font-display text-lg text-token">
+                        {n.customDesign.description || 'Custom Design Request'}
+                      </p>
+
+                      <p className="font-body text-xs text-muted mt-1">
+                        Customer: {n.customDesign.customer_name}
+                      </p>
+
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-4">
+
+                  <div>
+                  <p className="font-body text-xs uppercase text-muted">
+                    Occasion
+                  </p>
+                  <p className="font-body text-sm text-token">
+                    {n.customDesign.occasion || '-'}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-body text-xs uppercase text-muted">
+                    Color
+                  </p>
+                  <p className="font-body text-sm text-token">
+                    {n.customDesign.colors || '-'}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-body text-xs uppercase text-muted">
+                    Fabric
+                  </p>
+                  <p className="font-body text-sm text-token">
+                    {n.customDesign.fabric || '-'}
+                  </p>
+                </div>
+
+                <div>
+                <p className="font-body text-xs uppercase text-muted">
+                  Silhouette
+                </p>
+                <p className="font-body text-sm text-token">
+                  {n.customDesign.silhouette || '-'}
+                </p>
+              </div>
+
+              </div>
+
+              <div className="mt-4">
+                <p className="font-body text-xs uppercase text-muted">
+                  Customer's Request
+                </p>
+
+                <p className="font-body text-sm text-token mt-1 leading-relaxed">
+                  {n.customDesign.description || '-'}
+                </p>
+              </div>
+
+                <p className="font-body text-xs uppercase text-muted mt-4">
+                  Status: {n.customDesign.status}
+                </p>
+                          </div>
+
+                        </div>
                     </div>
-                    <p className="font-body text-sm text-muted mt-2 leading-relaxed">{n.message}</p>
-                    <p className="font-body text-xs text-muted mt-2">Audience: {n.audience === 'all' ? 'All customers' : 'Specific order'}</p>
+                  )}
                     <div className="flex items-center gap-3 mt-3">
                       {!n.read && (
                         <button onClick={() => handleMarkRead(n.id)} className="font-body text-xs uppercase tracking-[0.15em] text-muted hover:text-primary inline-flex items-center gap-1">

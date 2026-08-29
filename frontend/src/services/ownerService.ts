@@ -1,4 +1,5 @@
 import apiClient, { ownerRequest } from './apiClient';
+import { catalogService } from './catalogService';
 import {
   getOwnerAccessToken,
   getOwnerRefreshToken,
@@ -816,14 +817,83 @@ export const paymentService = {
 export const reviewModerationService = {
 
   async list(): Promise<OwnerReview[]> {
-
-    return ownerRequest<OwnerReview[]>({
+  const [reviewsResponse, designs] = await Promise.all([
+    ownerRequest<any>({
       method: 'GET',
-      url: '/owner/reviews/',
-    });
-  },
+      url: '/reviews/reviews/',
+    }),
+    catalogService.listProducts(),
+  ]);
 
+  console.log('OWNER REVIEWS RESPONSE:', reviewsResponse);
+  console.log('OWNER DESIGNS RESPONSE:', designs);
 
+  const reviews = Array.isArray(reviewsResponse)
+    ? reviewsResponse
+    : reviewsResponse?.results ?? [];
+
+  const designMap = new Map(
+    designs.map((design) => [Number(design.id), design])
+  );
+
+  return reviews.map((review: any) => {
+    const design = designMap.get(Number(review.design));
+
+    return {
+      id: String(review.id),
+
+      productId: Number(review.design),
+
+      productName:
+        review.design_name ??
+        review.product_name ??
+        design?.name ??
+        `Design #${review.design}`,
+
+      productImage:
+        review.design_image ??
+        review.product_image ??
+        design?.image ??
+        design?.thumbnail ??
+        '',
+
+      customerName:
+        review.customer_name ??
+        review.customer?.full_name ??
+        review.customer?.fullName ??
+        review.customer?.name ??
+        `Customer #${review.customer}`,
+
+      rating: Number(review.rating ?? 0),
+
+      title:
+        review.title ??
+        'Customer Review',
+
+      body:
+        review.review_text ??
+        review.body ??
+        '',
+
+      createdAt:
+        review.created_at ??
+        review.createdAt ??
+        '',
+
+      hidden:
+        review.hidden ??
+        !Boolean(review.is_approved),
+
+      reply:
+        review.reply ??
+        undefined,
+
+      repliedAt:
+        review.replied_at ??
+        undefined,
+    };
+  });
+},
   async toggleHidden(
     id: string,
     hidden: boolean
@@ -831,7 +901,7 @@ export const reviewModerationService = {
 
     return ownerRequest<OwnerReview>({
       method: 'PATCH',
-      url: `/owner/reviews/${id}/`,
+      url: `/reviews/reviews/${id}/`,
       data: {
         hidden,
       },
@@ -845,7 +915,7 @@ export const reviewModerationService = {
 
     await ownerRequest({
       method: 'DELETE',
-      url: `/owner/reviews/${id}/`,
+      url: `/reviews/reviews/${id}/`,
     });
   },
 
@@ -857,7 +927,7 @@ export const reviewModerationService = {
 
     return ownerRequest<OwnerReview>({
       method: 'POST',
-      url: `/owner/reviews/${id}/reply/`,
+      url: `/reviews/reviews/${id}/reply/`,
       data: {
         reply,
       },
@@ -876,21 +946,21 @@ export const ownerNotificationService = {
 
     return ownerRequest<OwnerNotification[]>({
       method: 'GET',
-      url: '/owner/notifications/',
+      url: '/notifications/notifications/',
     });
   },
 
 
   async send(
-    notification: Omit<
-      OwnerNotification,
-      'id' | 'sentAt'
-    >
+    notification: {
+      title: string;
+      message: string;
+      notification_type: string;
+    }
   ): Promise<OwnerNotification> {
-
     return ownerRequest<OwnerNotification>({
       method: 'POST',
-      url: '/owner/notifications/',
+      url: '/notifications/',
       data: notification,
     });
   },
@@ -902,7 +972,7 @@ export const ownerNotificationService = {
 
     await ownerRequest({
       method: 'POST',
-      url: `/owner/notifications/${id}/read/`,
+      url: `/notifications/notifications/${id}/read/`,
     });
   },
 
@@ -911,7 +981,7 @@ export const ownerNotificationService = {
 
     await ownerRequest({
       method: 'POST',
-      url: '/owner/notifications/read-all/',
+      url: '/notifications/notifications/read-all/',
     });
   },
 
@@ -922,7 +992,7 @@ export const ownerNotificationService = {
 
     await ownerRequest({
       method: 'DELETE',
-      url: `/owner/notifications/${id}/`,
+      url: `/notifications/notifications/${id}/`,
     });
   },
 };

@@ -48,6 +48,7 @@ export type ProductCategory =
 export interface Product {
   id: number;
   name: string;
+  thumbnail?: string;
   description: string;
 
   category: ProductCategory;
@@ -285,6 +286,8 @@ export interface ReviewMedia {
   id: string;
   name: string;
   preview: string;
+  file?: File;
+  url?: string;
 }
 
 export interface ReviewItem {
@@ -604,7 +607,8 @@ export type OwnerNotificationType =
   | 'broadcast'
   | 'order'
   | 'payment'
-  | 'production';
+  | 'production'
+  | 'custom_design';
 
 export interface OwnerNotification {
   id: string;
@@ -613,5 +617,20 @@ export interface OwnerNotification {
   message: string;
   audience: 'all' | 'order';
   sentAt: string;
-  read?: boolean;
+  read: boolean;
+
+  customDesign?: {
+    id: number;
+    customer: number;
+    customer_name: string;
+    occasion: string;
+    description: string;
+    colors: string;
+    fabric: string;
+    silhouette: string;
+    inspiration_image: string | null;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
 }

@@ -7,6 +7,13 @@ from .models import Payment
 
 class PaymentSerializer(serializers.ModelSerializer):
 
+    order_number = serializers.CharField(
+        source="order.order_number",
+        read_only=True
+    )
+
+    customer_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Payment
         fields = "__all__"
@@ -19,7 +26,13 @@ class PaymentSerializer(serializers.ModelSerializer):
             "created_by",
             "created_at",
             "updated_at",
+            "order_number",
+            "customer_name",
         )
+
+    def get_customer_name(self, obj):
+        customer = obj.order.customer
+        return f"{customer.first_name} {customer.last_name}".strip()
 
 class RazorpayOrderSerializer(serializers.Serializer):
     order_id = serializers.IntegerField()

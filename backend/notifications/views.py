@@ -1,4 +1,6 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 
@@ -42,3 +44,22 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.delete()
+
+    @action(detail=True, methods=["post"], url_path="read")
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+
+        notification.is_read = True
+        notification.save(update_fields=["is_read"])
+
+        return Response({
+            "message": "Notification marked as read."
+        })
+
+    @action(detail=False, methods=["post"], url_path="read-all")
+    def mark_all_read(self, request):
+        self.get_queryset().update(is_read=True)
+
+        return Response({
+            "message": "All notifications marked as read."
+        })

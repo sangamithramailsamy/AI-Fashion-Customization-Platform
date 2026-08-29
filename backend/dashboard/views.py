@@ -221,3 +221,137 @@ class DashboardAPIView(APIView):
         }
 
         return Response(data)
+
+class ReportsAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminOrOwner]
+
+    def get(self, request):
+        user = request.user
+
+        # ---------------------------------------------------------
+        # ORDERS
+        # ---------------------------------------------------------
+
+        if user.is_superuser:
+            orders = Order.objects.all()
+        else:
+            orders = Order.objects.filter(owner=user)
+
+        # ---------------------------------------------------------
+        # PAYMENTS / REVENUE
+        # ---------------------------------------------------------
+
+        payments = Payment.objects.filter(
+            order__in=orders,
+            status="SUCCESS",
+        )
+
+        total_revenue = (
+            payments.aggregate(
+                total=Sum("amount")
+            )["total"]
+            or 0
+        )
+
+        # ---------------------------------------------------------
+        # LAST 6 MONTHS
+        # ---------------------------------------------------------
+
+        now = timezone.now()
+
+        six_months_ago = now - timezone.timedelta(days=180)
+
+        monthly_revenue = (
+            payments
+            .filter(payment_date__gte=six_months_ago)
+            .annotate(month=TruncMonth("payment_date"))
+            .values("month")
+            .annotate(value=Sum("amount"))
+            .order_by("month")
+        )
+
+        monthly_orders = (
+            orders
+            .filter(created_at__gte=six_months_ago)
+            .annotate(month=TruncMonth("created_at"))
+            .values("month")
+            .annotate(value=models.Count("id"))
+            .order_by("month")
+        )
+
+        # ---------------------------------------------------------
+        # CUSTOMERS
+        # ---------------------------------------------------------
+
+        if user.is_superuser:
+            customers = CustomerProfile.objects.all()
+        else:
+            customers = (
+                CustomerProfile.objects
+                .filter(orders__owner=user)
+                .distinct()
+            )
+
+        monthly_customers = (
+            customers
+            .filter(user__date_joined__gte=six_months_ago)
+            .annotate(month=TruncMonth("user__date_joined"))
+            .values("month")
+            .annotate(value=models.Count("id"))
+            .order_by("month")
+        )
+
+        # ---------------------------------------------------------
+        # CONVERT SERIES
+        # ---------------------------------------------------------
+
+        revenue_series = [
+            {
+                "month": item["month"].strftime("%b"),
+                "value": float(item["value"] or 0),
+            }
+            for item in monthly_revenue
+        ]
+
+        orders_series = [
+            {
+                "month": item["month"].strftime("%b"),
+                "value": item["value"],
+            }
+            for item in monthly_orders
+        ]
+
+        customers_series = [
+            {
+                "month": item["month"].strftime("%b"),
+                "value": item["value"],
+            }
+            for item in monthly_customers
+        ]
+
+        # ---------------------------------------------------------
+        # PRODUCTS
+        # ---------------------------------------------------------
+
+        total_products = Design.objects.filter(
+            is_active=True
+        ).count()
+
+        # ---------------------------------------------------------
+        # RESPONSE
+        # ---------------------------------------------------------
+
+        data = {
+            "revenueSeries": revenue_series,
+            "ordersSeries": orders_series,
+            "customersSeries": customers_series,
+
+            "totalRevenue": float(total_revenue),
+
+            "revenueGrowth": 0,
+            "ordersGrowth": 0,
+            "customersGrowth": 0,
+            "productsGrowth": 0,
+        }
+
+        return Response(data)

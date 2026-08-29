@@ -26,9 +26,18 @@ export default function AccountReviewsPage() {
   // Pending reviews = delivered order items not yet reviewed
   const reviewedProductIds = new Set(reviews.filter((r) => r.status === 'published').map((r) => r.productId));
   const pendingItems = orders
-    .filter((o) => o.status === 'DELIVERED')
-    .flatMap((o) => o.items.map((item) => ({ ...item, orderId: o.id })))
-    .filter((item) => !reviewedProductIds.has(item.productId));
+  .filter((o) => o.status === 'DELIVERED')
+  .flatMap((o) =>
+    o.items.map((item) => ({
+      ...item,
+      orderId: o.id,
+    }))
+  )
+  .filter(
+    (item) =>
+      item.productId !== undefined &&
+      !reviewedProductIds.has(item.productId)
+  );
 
   const publishedReviews = reviews.filter((r) => r.status === 'published');
 

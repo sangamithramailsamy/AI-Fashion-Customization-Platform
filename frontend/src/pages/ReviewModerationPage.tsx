@@ -24,9 +24,17 @@ export default function ReviewModerationPage() {
   const [replying, setReplying] = useState(false);
 
   useEffect(() => {
-    reviewModerationService.list().then(setReviews).finally(() => setLoading(false));
-  }, []);
-
+  reviewModerationService
+    .list()
+    .then((data) => {
+      setReviews(Array.isArray(data) ? data : []);
+    })
+    .catch((error) => {
+      console.error('Failed to load reviews:', error);
+      setReviews([]);
+    })
+    .finally(() => setLoading(false));
+}, []);
   const filtered = useMemo(() => {
     return reviews.filter((r) => {
       if (search && !r.customerName.toLowerCase().includes(search.toLowerCase()) && !r.productName.toLowerCase().includes(search.toLowerCase()) && !r.title.toLowerCase().includes(search.toLowerCase())) return false;

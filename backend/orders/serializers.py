@@ -25,7 +25,6 @@ def money(value):
 
 class OrderItemSerializer(serializers.ModelSerializer):
 
-    # Product information shown in order details
     product_name = serializers.SerializerMethodField(
         read_only=True
     )
@@ -34,7 +33,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    # Explicitly accept DesignVariant ID from frontend
+    product_id = serializers.SerializerMethodField(
+        read_only=True
+    )
+
     variant = serializers.PrimaryKeyRelatedField(
         queryset=DesignVariant.objects.all(),
         allow_null=True,
@@ -55,6 +57,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             "notes",
             "created_at",
             "updated_at",
+            "product_id",
             "product_name",
             "product_image",
         ]
@@ -68,6 +71,30 @@ class OrderItemSerializer(serializers.ModelSerializer):
             },
         }
 
+    def get_product_id(self, obj):
+        if obj.variant:
+            return obj.variant.design_id
+
+        return None
+
+    def get_product_name(self, obj):
+
+        if getattr(obj, "product_name", None):
+            return obj.product_name
+
+        variant = getattr(obj, "variant", None)
+
+        if variant:
+            design = getattr(
+                variant,
+                "design",
+                None
+            )
+
+            if design:
+                return design.name
+
+        return None
     # ------------------------------------------------------
     # PRODUCT NAME
     # ------------------------------------------------------

@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 
 from django.contrib import admin
 from django.urls import include, path
+from dashboard.views import ReportsAPIView
 
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -26,6 +27,7 @@ urlpatterns = [
     path("api/notifications/", include("notifications.urls")),
     path("api/orders/", include("orders.urls")),
     path("api/dashboard/", include("dashboard.urls")),
+    path("api/owner/reports/", ReportsAPIView.as_view(), name="owner-reports"),
     path("api/production/", include("production.urls")),
     path("api/inventory/", include("inventory.urls")),
     path("api/catalog/", include("catalog.urls")),

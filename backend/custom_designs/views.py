@@ -5,6 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from .models import CustomDesignRequest
 from .serializers import CustomDesignRequestSerializer
 
+from notifications.models import Notification
+from users.models import UserRole
 
 class CustomDesignRequestListCreateView(generics.ListCreateAPIView):
     serializer_class = CustomDesignRequestSerializer
@@ -17,10 +19,32 @@ class CustomDesignRequestListCreateView(generics.ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
-        serializer.save(
-            customer=self.request.user.customer_profile
+        customer = self.request.user.customer_profile
+
+        custom_design = serializer.save(
+            customer=customer
         )
 
+        Notification.objects.create(
+            recipient=self.request.user,
+            custom_design=custom_design,
+            title="New Custom Design Request",
+            message=f"{customer.user.get_full_name()} submitted a new custom design request.",
+            notification_type=Notification.CUSTOM_DESIGN_REQUEST,
+        )
+
+        owners = self.request.user.__class__.objects.filter(
+            role=UserRole.OWNER
+        )
+
+        for owner in owners:
+            Notification.objects.create(
+            recipient=owner,
+            custom_design=custom_design,
+            title="New Custom Design Request",
+            message=f"{customer.user.get_full_name()} submitted a new custom design request.",
+            notification_type=Notification.CUSTOM_DESIGN_REQUEST,
+        )
 
 class CustomDesignRequestDetailView(generics.RetrieveAPIView):
     serializer_class = CustomDesignRequestSerializer

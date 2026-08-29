@@ -1,5 +1,7 @@
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -13,12 +15,42 @@ from .permissions import IsReviewOwner
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+
     permission_classes = [
         IsAuthenticated,
         IsReviewOwner,
     ]
 
+    def get_permissions(self):
+        if self.action == "product_reviews":
+            return [AllowAny()]
+
+        return [
+            IsAuthenticated(),
+            IsReviewOwner(),
+        ]
+
     def get_queryset(self):
+
+        # Public endpoint:
+        # Anyone can view approved reviews for a product.
+        if self.action == "product_reviews":
+            return (
+                Review.objects
+                .filter(
+                    is_approved=True
+                )
+                .select_related(
+                    "customer__user",
+                    "design",
+                    "order",
+                )
+                .prefetch_related(
+                    "media"
+                )
+            )
+
+        # Owner/staff can see all reviews.
         if self.request.user.is_staff:
             return (
                 Review.objects
@@ -28,12 +60,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
                     "order",
                 )
                 .prefetch_related(
-                    "media",
+                    "media"
                 )
             )
 
+        # Normal customer can see only their own reviews.
+        if not self.request.user.is_authenticated:
+            return Review.objects.none()
+
         return (
-            Review.objects.filter(
+            Review.objects
+            .filter(
                 customer__user=self.request.user
             )
             .select_related(
@@ -42,7 +79,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 "order",
             )
             .prefetch_related(
-                "media",
+                "media"
             )
         )
 
@@ -59,6 +96,24 @@ class ReviewViewSet(viewsets.ModelViewSet):
             customer=customer
         )
 
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="product/(?P<design_id>[^/.]+)",
+        permission_classes=[AllowAny],
+    )
+    def product_reviews(self, request, design_id=None):
+        reviews = self.get_queryset().filter(
+            design_id=design_id
+        )
+
+        serializer = self.get_serializer(
+          reviews,
+          many=True,
+          context={"request": request},
+        )
+
+        return Response(serializer.data)
 
 class ReviewMediaViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewMediaSerializer

@@ -13,6 +13,8 @@ class Notification(models.Model):
     ORDER_CANCELLED = "ORDER_CANCELLED"
     PAYMENT_RECEIVED = "PAYMENT_RECEIVED"
     NEW_REVIEW = "NEW_REVIEW"
+    CUSTOM_DESIGN_REQUEST = "CUSTOM_DESIGN_REQUEST"
+
 
     TYPES = [
         (ORDER_PLACED, "Order Placed"),
@@ -23,6 +25,7 @@ class Notification(models.Model):
         (ORDER_CANCELLED, "Order Cancelled"),
         (PAYMENT_RECEIVED, "Payment Received"),
         (NEW_REVIEW, "New Review"),
+        (CUSTOM_DESIGN_REQUEST, "Custom Design Request"),
     ]
 
     recipient = models.ForeignKey(
@@ -33,6 +36,14 @@ class Notification(models.Model):
 
     order = models.ForeignKey(
         Order,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+
+    custom_design = models.ForeignKey(
+        "custom_designs.CustomDesignRequest",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
