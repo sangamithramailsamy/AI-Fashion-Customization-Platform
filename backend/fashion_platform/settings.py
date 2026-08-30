@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "inventory",
     "custom_designs",
     'contact',
+    'ai_design',
 ] 
 
 MIDDLEWARE = [
@@ -217,3 +218,5 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 CONTACT_RECEIVER_EMAIL = "sugunamithra05@gmail.com"
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
