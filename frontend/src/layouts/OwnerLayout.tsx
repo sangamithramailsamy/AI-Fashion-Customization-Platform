@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Outlet, NavLink, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  LayoutDashboard, Store, Package, ShoppingBag, Users, UserCog,
-  Boxes, Scissors, CreditCard, Star, Bell, LogOut, Menu, X,
-  ChevronRight, ArrowLeft, BarChart3,
+import { 
+  LayoutDashboard, Store, Package, ShoppingBag, Users, UserCog, 
+  Boxes, Scissors, CreditCard, Star, Bell, LogOut, Menu, X, 
+  ChevronRight, ArrowLeft, BarChart3, TicketPercent,
 } from 'lucide-react';
 import { useOwnerAuth } from '@/context/OwnerAuthContext';
 import BrandLogo from '@/components/BrandLogo';
@@ -25,6 +25,7 @@ const OWNER_NAV: NavEntry[] = [
   { to: '/owner/employees', label: 'Employees', icon: UserCog },
   { to: '/owner/inventory', label: 'Inventory', icon: Boxes },
   { to: '/owner/production', label: 'Production', icon: Scissors },
+  { to: '/owner/coupons', label: 'Coupons', icon: TicketPercent,},
   { to: '/owner/payments', label: 'Payments', icon: CreditCard },
   { to: '/owner/reviews', label: 'Reviews', icon: Star },
   { to: '/owner/notifications', label: 'Notifications', icon: Bell },

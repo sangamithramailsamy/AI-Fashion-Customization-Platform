@@ -54,6 +54,7 @@ import ReviewModerationPage from '@/pages/ReviewModerationPage';
 import NotificationManagementPage from '@/pages/NotificationManagementPage';
 import ReportsPage from '@/pages/ReportsPage';
 import { CustomerProtectedRoute, OwnerProtectedRoute } from '@/components/ProtectedRoute';
+import CouponManagementPage from '@/pages/CouponManagementPage';
 
 export default function App() {
   return (
@@ -112,6 +113,7 @@ export default function App() {
                               <Route path="inventory" element={<InventoryManagementPage />} />
                               <Route path="production" element={<ProductionManagementPage />} />
                               <Route path="payments" element={<PaymentManagementPage />} />
+                              <Route path="coupons" element={<CouponManagementPage />} />
                               <Route path="reviews" element={<ReviewModerationPage />} />
                               <Route path="notifications" element={<NotificationManagementPage />} />
                               <Route path="reports" element={<ReportsPage />} />

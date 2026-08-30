@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -146,6 +146,22 @@ export default function CheckoutPage() {
   const [couponCode, setCouponCode] =
     useState('');
 
+  const [availableCoupons, setAvailableCoupons] =
+    useState<Array<{
+      id: number;
+      code: string;
+      description: string;
+      discount_type: 'PERCENTAGE' | 'FLAT';
+      discount_value: number | string;
+      minimum_order_amount: number | string;
+      maximum_discount_amount: number | string | null;
+      usage_limit: number;
+      used_count: number;
+      valid_from: string;
+      valid_until: string;
+      is_active: boolean;
+    }>>([]);
+
   const [coupon, setCoupon] =
     useState<AppliedCoupon | null>(null);
 
@@ -174,6 +190,63 @@ export default function CheckoutPage() {
 
   const createdOrderRef =
     useRef<Order | null>(null);
+
+  // Load the coupons created by the owner from Django.
+  // Do not hard-code coupon codes here: the customer checkout
+  // must always show the currently active coupons from the database.
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAvailableCoupons = async () => {
+      try {
+        const response = await apiClient.get('/discounts/coupons/');
+
+        const data = Array.isArray(response.data)
+          ? response.data
+          : response.data?.results ?? [];
+
+        const now = new Date();
+
+        const usableCoupons = data.filter((item: any) => {
+          if (!item?.is_active) return false;
+
+          const validFrom = item.valid_from
+            ? new Date(item.valid_from)
+            : null;
+          const validUntil = item.valid_until
+            ? new Date(item.valid_until)
+            : null;
+
+          if (validFrom && now < validFrom) return false;
+          if (validUntil && now > validUntil) return false;
+          if (
+            Number(item.used_count ?? 0) >=
+            Number(item.usage_limit ?? 0)
+          ) {
+            return false;
+          }
+
+          return Boolean(item.code);
+        });
+
+        if (mounted) {
+          setAvailableCoupons(usableCoupons);
+        }
+      } catch (error) {
+        console.error('Unable to load available coupons:', error);
+
+        if (mounted) {
+          setAvailableCoupons([]);
+        }
+      }
+    };
+
+    loadAvailableCoupons();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const lines = cart
     .map((item) => ({
@@ -1091,35 +1164,51 @@ export default function CheckoutPage() {
                           </motion.p>
                         )}
 
-                        <div className="mt-5">
+                        {availableCoupons.length > 0 && (
+                          <div className="mt-5">
+                            <p className="font-body text-xs uppercase tracking-[0.2em] text-muted mb-2">
+                              Available coupons
+                            </p>
 
-                          <p className="font-body text-xs uppercase tracking-[0.2em] text-muted mb-2">
-                            Try a demo code
-                          </p>
+                            <div className="space-y-2">
+                              {availableCoupons.map((availableCoupon) => (
+                                <button
+                                  key={availableCoupon.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setCouponCode(availableCoupon.code)
+                                  }
+                                  className="w-full text-left p-3 border border-token hover:border-primary transition-colors"
+                                >
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div className="min-w-0">
+                                      <p className="font-display text-base text-token tracking-wide">
+                                        {availableCoupon.code}
+                                      </p>
+                                      {availableCoupon.description && (
+                                        <p className="font-body text-xs text-muted mt-1">
+                                          {availableCoupon.description}
+                                        </p>
+                                      )}
+                                    </div>
 
-                          <div className="flex flex-wrap gap-2">
+                                    <span className="shrink-0 font-body text-xs uppercase tracking-[0.12em] text-primary">
+                                      {availableCoupon.discount_type === 'PERCENTAGE'
+                                        ? `${availableCoupon.discount_value}% OFF`
+                                        : `${formatPrice(Number(availableCoupon.discount_value))} OFF`}
+                                    </span>
+                                  </div>
 
-                            {[
-                              'WELCOME10',
-                              'FESTIVE500',
-                              'BOUTIQUE15',
-                            ].map((c) => (
-
-                              <button
-                                key={c}
-                                onClick={() =>
-                                  setCouponCode(c)
-                                }
-                                className="px-3 py-1.5 text-xs font-body border border-token text-token hover:border-primary hover:text-primary transition-colors"
-                              >
-                                {c}
-                              </button>
-
-                            ))}
-
+                                  {Number(availableCoupon.minimum_order_amount ?? 0) > 0 && (
+                                    <p className="font-body text-[11px] text-muted mt-2">
+                                      Minimum order {formatPrice(Number(availableCoupon.minimum_order_amount))}
+                                    </p>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-
-                        </div>
+                        )}
 
                       </div>
                     )}
