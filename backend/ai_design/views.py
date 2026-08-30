@@ -11,7 +11,7 @@ from .serializers import AIDesignSerializer
 
 
 class AIDesignGenerateView(generics.CreateAPIView):
-    serializer_class = AIDesignSerializer
+    serializer_class = AIDesignSerializer   
     permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser]
 
