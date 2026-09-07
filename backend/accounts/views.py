@@ -80,3 +80,12 @@ class MeView(APIView):
             "email": user.email,
             "role": user.role,
         })
+    
+
+
+# cd AI-Fashion-Customization-Platform                       
+# cd backend
+# .\venv\Scripts\Activate 
+# python manage.py runserver
+# cd frontend 
+# npm run dev 
